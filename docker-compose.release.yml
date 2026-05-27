@@ -1,15 +1,15 @@
 # KABAN AI — production compose (pre-built images from GHCR)
 # Requires Docker only — no Python, no make.
 #
-#   curl -fsSL https://raw.githubusercontent.com/cha0skvlt/kaban.ai/v1.0.0/.env.example -o .env
-#   curl -fsSL https://raw.githubusercontent.com/cha0skvlt/kaban.ai/v1.0.0/docker-compose.release.yml -o docker-compose.yml
+#   curl -fsSL https://raw.githubusercontent.com/cha0skvlt/kaban.ai/v1.0.1/.env.example -o .env
+#   curl -fsSL https://raw.githubusercontent.com/cha0skvlt/kaban.ai/v1.0.1/docker-compose.release.yml -o docker-compose.yml
 #   docker compose up -d
 #
 # Images: https://github.com/cha0skvlt/kaban.ai/pkgs/container/kaban.ai
 
 services:
   backend:
-    image: ghcr.io/cha0skvlt/kaban.ai:1.0.0-backend
+    image: ghcr.io/cha0skvlt/kaban.ai:1.0.1-backend
     restart: unless-stopped
     env_file:
       - .env
@@ -21,7 +21,7 @@ services:
       - "host.docker.internal:host-gateway"
 
   nginx:
-    image: ghcr.io/cha0skvlt/kaban.ai:1.0.0-nginx
+    image: ghcr.io/cha0skvlt/kaban.ai:1.0.1-nginx
     restart: unless-stopped
     ports:
       - "8080:80"

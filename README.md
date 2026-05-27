@@ -120,16 +120,16 @@ curl -s http://localhost:8080/api/agent/from-text \
 
 ## Quick start (production)
 
-**Latest release:** [v1.0.0](https://github.com/cha0skvlt/kaban.ai/releases/tag/v1.0.0) — pre-built images on [GHCR](https://github.com/cha0skvlt/kaban.ai/pkgs/container/kaban.ai).
+**Latest release:** [v1.0.1](https://github.com/cha0skvlt/kaban.ai/releases/tag/v1.0.1) — pre-built **multi-arch** images on [GHCR](https://github.com/cha0skvlt/kaban.ai/pkgs/container/kaban.ai) (`amd64` + `arm64` for Mac, Windows, and Linux).
 
-**Prerequisites:** [Docker](https://docs.docker.com/) and [Ollama](https://ollama.com/) on the host (for local LLM mode), or an external OpenAI-compatible API in `.env`.
+**Prerequisites:** [Docker](https://docs.docker.com/) (Docker Desktop, OrbStack, or Linux engine) and [Ollama](https://ollama.com/) on the host (for local LLM mode), or an external OpenAI-compatible API in `.env`.
 
 No Python or `make` required — only Docker Compose and a `.env` file.
 
 ```bash
 mkdir kaban && cd kaban
-curl -fsSLO https://github.com/cha0skvlt/kaban.ai/releases/download/v1.0.0/docker-compose.release.yml
-curl -fsSLO https://raw.githubusercontent.com/cha0skvlt/kaban.ai/v1.0.0/.env.example
+curl -fsSLO https://github.com/cha0skvlt/kaban.ai/releases/download/v1.0.1/docker-compose.release.yml
+curl -fsSLO https://raw.githubusercontent.com/cha0skvlt/kaban.ai/v1.0.1/.env.example
 cp .env.example .env
 # edit .env — set KANBAN_API_KEY and your LLM provider
 ollama pull qwen2.5-coder:32b   # if using local Ollama
@@ -146,8 +146,8 @@ docker compose -f docker-compose.release.yml up -d
 
 | Image | Tag |
 |-------|-----|
-| Backend API | `ghcr.io/cha0skvlt/kaban.ai:1.0.0-backend` |
-| Nginx + UI | `ghcr.io/cha0skvlt/kaban.ai:1.0.0-nginx` |
+| Backend API | `ghcr.io/cha0skvlt/kaban.ai:1.0.1-backend` |
+| Nginx + UI | `ghcr.io/cha0skvlt/kaban.ai:1.0.1-nginx` |
 
 Board data is stored in the Docker volume `kaban-data` (not on the host filesystem by default).
 
@@ -235,7 +235,8 @@ make restart   # rebuild + restart
 | Note | Detail |
 |------|--------|
 | Proxy | Nginx serves the UI and forwards `/api/*` to FastAPI |
-| Ollama | Runs on the **host**, not in a container (`host.docker.internal` on Mac) |
+| Ollama | Runs on the **host**; containers use `host.docker.internal` (Mac/Windows native; Linux via `host-gateway` in compose) |
+| Platforms | Release images: **linux/amd64** + **linux/arm64** (Intel/Apple Silicon Mac, Windows, Linux) |
 | Data | Board persists in `./backend/data/` (bind mount) |
 
 ### Production compose (`docker-compose.release.yml`)
