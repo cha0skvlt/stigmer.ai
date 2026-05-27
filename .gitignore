@@ -50,3 +50,6 @@ Thumbs.db
 
 # Docker (local overrides only)
 docker-compose.override.yml
+
+# Local agent instructions (not shared)
+AGENT.md
