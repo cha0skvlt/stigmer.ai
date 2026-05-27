@@ -147,9 +147,9 @@ def test_ensure_default_labels_normalizes_custom_entries():
             "cards": [],
         }
     )
-    ids = {l["id"] for l in board["labels"]}
+    ids = {label["id"] for label in board["labels"]}
     assert "custom-1" in ids
-    custom = next(l for l in board["labels"] if l["id"] == "custom-1")
+    custom = next(label for label in board["labels"] if label["id"] == "custom-1")
     assert custom["tone"] == "purple"
     assert custom["name"] == "custom-1"
     assert custom["emoji"] == "🏷️"
@@ -171,7 +171,7 @@ def test_ensure_default_labels_merges_and_prunes_cards():
             ],
         }
     )
-    red = next(l for l in board["labels"] if l["id"] == "red")
+    red = next(label for label in board["labels"] if label["id"] == "red")
     assert red["name"] == "FAQ"
     assert board["cards"][0]["labels"] == ["red"]
 
@@ -179,7 +179,7 @@ def test_ensure_default_labels_merges_and_prunes_cards():
 def test_get_board_includes_labels(env_and_store):
     board = store.get_board()
     assert len(board["labels"]) >= 5
-    assert any(l["id"] == "red" for l in board["labels"])
+    assert any(label["id"] == "red" for label in board["labels"])
 
 
 def test_get_board_adds_starter_card_when_empty(env_and_store):

@@ -114,7 +114,6 @@ def save_store(data):
 def ensure_default_columns(board_state):
     columns = board_state.get("columns") or []
     default_by_id = {col["id"]: col for col in DEFAULT_COLUMNS}
-    default_ids = set(default_by_id)
 
     if not columns:
         board_state["columns"] = [dict(col) for col in DEFAULT_COLUMNS]
