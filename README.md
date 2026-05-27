@@ -11,6 +11,7 @@
 
 <p>
   <a href="https://github.com/cha0skvlt/kaban.ai/releases/latest"><img src="https://img.shields.io/github/v/release/cha0skvlt/kaban.ai?label=Latest" alt="Latest release"></a>
+  <a href="https://github.com/cha0skvlt/kaban.ai/actions/workflows/ci.yml"><img src="https://github.com/cha0skvlt/kaban.ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
   <img src="https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white" alt="Python 3.12+">
   <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
@@ -120,7 +121,7 @@ curl -s http://localhost:8080/api/agent/from-text \
 
 ## Quick start (production)
 
-**Latest release:** [v1.0.1](https://github.com/cha0skvlt/kaban.ai/releases/tag/v1.0.1) — pre-built **multi-arch** images on [GHCR](https://github.com/cha0skvlt/kaban.ai/pkgs/container/kaban.ai) (`amd64` + `arm64` for Mac, Windows, and Linux).
+**Latest release:** [v1.0.2](https://github.com/cha0skvlt/kaban.ai/releases/tag/v1.0.2) — pre-built **multi-arch** images on [GHCR](https://github.com/cha0skvlt/kaban.ai/pkgs/container/kaban.ai) (`amd64` + `arm64` for Mac, Windows, and Linux).
 
 **Prerequisites:** [Docker](https://docs.docker.com/) (Docker Desktop, OrbStack, or Linux engine) and [Ollama](https://ollama.com/) on the host (for local LLM mode), or an external OpenAI-compatible API in `.env`.
 
@@ -128,8 +129,8 @@ No Python or `make` required — only Docker Compose and a `.env` file.
 
 ```bash
 mkdir kaban && cd kaban
-curl -fsSLO https://github.com/cha0skvlt/kaban.ai/releases/download/v1.0.1/docker-compose.release.yml
-curl -fsSLO https://raw.githubusercontent.com/cha0skvlt/kaban.ai/v1.0.1/.env.example
+curl -fsSLO https://github.com/cha0skvlt/kaban.ai/releases/download/v1.0.2/docker-compose.release.yml
+curl -fsSLO https://raw.githubusercontent.com/cha0skvlt/kaban.ai/v1.0.2/.env.example
 cp .env.example .env
 # edit .env — set KANBAN_API_KEY and your LLM provider
 ollama pull qwen2.5-coder:32b   # if using local Ollama
@@ -146,8 +147,8 @@ docker compose -f docker-compose.release.yml up -d
 
 | Image | Tag |
 |-------|-----|
-| Backend API | `ghcr.io/cha0skvlt/kaban.ai:1.0.1-backend` |
-| Nginx + UI | `ghcr.io/cha0skvlt/kaban.ai:1.0.1-nginx` |
+| Backend API | `ghcr.io/cha0skvlt/kaban.ai:1.0.2-backend` |
+| Nginx + UI | `ghcr.io/cha0skvlt/kaban.ai:1.0.2-nginx` |
 
 Board data is stored in the Docker volume `kaban-data` (not on the host filesystem by default).
 
@@ -264,8 +265,8 @@ Versioning follows [SemVer](https://semver.org/). Changelog: [CHANGELOG.md](CHAN
 New releases: update [VERSION](VERSION), [CHANGELOG.md](CHANGELOG.md), and `docker-compose.release.yml` image tags, then:
 
 ```bash
-git tag v1.0.1
-git push origin v1.0.1
+git tag v1.0.2
+git push origin v1.0.2
 ```
 
 CI publishes images and attaches an updated `docker-compose.release.yml` to the GitHub Release.
@@ -291,9 +292,12 @@ All Python (`backend/`, `test/`) uses:
 - **[Ruff](https://docs.astral.sh/ruff/)** — lint (pycodestyle, pyflakes, import order, bugbear, pyupgrade)
 
 ```bash
-make lint    # must pass before merge
-make format  # auto-fix
+make lint       # must pass before merge / push
+make test-cov   # 137 tests, 100% coverage gate
+make format     # auto-fix
 ```
+
+Run **`make lint`** and **`make test-cov`** before every push (same checks as [CI](.github/workflows/ci.yml) on `main`).
 
 ### Tests
 
