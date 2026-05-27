@@ -1,9 +1,9 @@
 <div align="center">
 
 <h1 align="center" style="border: none; margin: 0.6em 0;">
-  <span style="display: inline-flex; align-items: center; gap: 0.45em; font-size: 48px; font-weight: 700; line-height: 1; letter-spacing: 0.02em;">
-    <img src="favicon_io/favicon-32x32.png" alt="" width="48" height="48" style="display: block;">
+  <span style="display: inline-flex; align-items: center; gap: 0.35em;">
     <span>KABAN AI</span>
+    <img src="favicon_io/favicon-32x32.png" alt="" width="26" height="26" style="display: block;">
   </span>
 </h1>
 
