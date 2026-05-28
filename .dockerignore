@@ -10,7 +10,6 @@ backend/board_store.json
 **/__pycache__
 **/*.pyc
 test
-docs
 scripts
 README.md
 CHANGELOG.md
