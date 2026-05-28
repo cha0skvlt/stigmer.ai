@@ -3,7 +3,7 @@
 <h1 align="center" style="border: none; margin: 0.6em 0;">
   <span style="display: inline-flex; align-items: center; gap: 0.35em;">
     <span>KABAN AI</span>
-    <img src="favicon_io/favicon-32x32.png" alt="" width="26" height="26" style="display: block;">
+    <img src="img/kaban.png" alt="" width="26" height="26" style="display: block; border-radius: 6px; object-fit: cover;">
   </span>
 </h1>
 
@@ -366,6 +366,7 @@ Themes (`data-theme="dark"` / `light`) remap surfaces, text, shadows, and `color
 ```
 .github/workflows/      # CI + release (GHCR publish on tags)
 docker/Dockerfile.nginx # production UI image
+img/                    # logos, favicons, kaban.png
 docs/demo.png           # README screenshot
 frontend/kanban.html    # UI (single file)
 backend/app.py          # FastAPI routes

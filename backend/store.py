@@ -67,12 +67,21 @@ DEFAULT_COLUMNS = [
     {"id": "done", "title": "Done", "color": COLOR_PALETTE["green"]},
 ]
 
+ALLOWED_LABEL_TONES = frozenset(
+    {"green", "blue", "orange", "purple", "red", "teal", "pink", "gray", "lime", "indigo"}
+)
+
 DEFAULT_LABELS = [
     {"id": "green", "name": "Done", "tone": "green", "emoji": "🟢"},
     {"id": "blue", "name": "Review", "tone": "blue", "emoji": "🔵"},
     {"id": "orange", "name": "Urgent", "tone": "orange", "emoji": "🟡"},
     {"id": "purple", "name": "AI", "tone": "purple", "emoji": "🟣"},
     {"id": "red", "name": "Bug", "tone": "red", "emoji": "🔴"},
+    {"id": "teal", "name": "Design", "tone": "teal", "emoji": "🔷"},
+    {"id": "pink", "name": "Feature", "tone": "pink", "emoji": "🩷"},
+    {"id": "gray", "name": "Low", "tone": "gray", "emoji": "⚪"},
+    {"id": "lime", "name": "Quick", "tone": "lime", "emoji": "⚡"},
+    {"id": "indigo", "name": "Research", "tone": "indigo", "emoji": "🔮"},
 ]
 
 STARTER_CARD_ID = "kaban-starter"
@@ -204,7 +213,6 @@ def replace_labels(labels_in: list[dict[str, Any]]) -> None:
     if not labels_in:
         raise ValueError("At least one label is required")
 
-    allowed_tones = {item["tone"] for item in DEFAULT_LABELS}
     with pool().connection() as conn:
         conn.execute("SET TIME ZONE 'UTC';")
         _ensure_seeded(conn)
@@ -217,7 +225,7 @@ def replace_labels(labels_in: list[dict[str, Any]]) -> None:
                         continue
                     name = str(label.get("name") or slug)
                     tone = str(label.get("tone") or "purple")
-                    if tone not in allowed_tones:
+                    if tone not in ALLOWED_LABEL_TONES:
                         tone = "purple"
                     emoji = str(label.get("emoji") or "🏷️")
                     cur.execute(
@@ -413,14 +421,13 @@ def save_board(board_state: dict[str, Any]) -> None:
                     )
 
                 # Insert labels.
-                allowed_tones = {item["tone"] for item in DEFAULT_LABELS}
                 for label in labels_in:
                     slug = str(label.get("id") or "").strip()
                     if not slug:
                         continue
                     name = str(label.get("name") or slug)
                     tone = str(label.get("tone") or "purple")
-                    if tone not in allowed_tones:
+                    if tone not in ALLOWED_LABEL_TONES:
                         tone = "purple"
                     emoji = str(label.get("emoji") or "🏷️")
                     cur.execute(

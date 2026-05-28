@@ -113,7 +113,9 @@ CRITICAL: Your previous response was invalid. Output ONLY one add_task action wi
 FALLBACK = {"actions": [], "message": "Could not parse model response"}
 
 MUTATION_TYPES = {"add_task", "move_task", "update_task", "delete_task"}
-ALLOWED_LABELS = frozenset({"green", "blue", "orange", "purple", "red"})
+ALLOWED_LABELS = frozenset(
+    {"green", "blue", "orange", "purple", "red", "teal", "pink", "gray", "lime", "indigo"}
+)
 LABEL_ALIASES = {
     "urgent": "orange",
     "asap": "orange",
@@ -125,6 +127,16 @@ LABEL_ALIASES = {
     "docs": "blue",
     "done": "green",
     "routine": "green",
+    "design": "teal",
+    "ui": "teal",
+    "ux": "teal",
+    "feature": "pink",
+    "low": "gray",
+    "minor": "gray",
+    "quick": "lime",
+    "fast": "lime",
+    "research": "indigo",
+    "spike": "indigo",
 }
 TITLE_PREFIX_RE = re.compile(
     r"(?i)^(?:need to|please|todo:|task:|fix:|add:|action:|\-|\*|\d+\.)\s*"

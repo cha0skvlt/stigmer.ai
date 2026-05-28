@@ -7,7 +7,6 @@ htmlcov
 .env.*
 backend/data/board_store.json
 backend/board_store.json
-favicon_io
 **/__pycache__
 **/*.pyc
 test

@@ -21,10 +21,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KABAN AI</title>
-<link rel="icon" href="/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" href="/img/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
 <meta name="theme-color" content="#111014">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,6 +61,11 @@
   --p-purple: #6750a4;
   --p-red: #f85149;
   --p-green: #3fb950;
+  --p-teal: #2eb8a8;
+  --p-pink: #e06c9f;
+  --p-gray: #9aa0a6;
+  --p-lime: #8bc34a;
+  --p-indigo: #6e7ff2;
   --p-bronze: #b8845a;
   --p-bronze-dark: #8f6238;
   --p-on-filled: #ffffff;
@@ -105,6 +110,16 @@
   --label-purple-fg: var(--accent);
   --label-red-bg: color-mix(in srgb, var(--p-red) 12%, transparent);
   --label-red-fg: var(--error);
+  --label-teal-bg: color-mix(in srgb, var(--p-teal) 14%, transparent);
+  --label-teal-fg: color-mix(in srgb, var(--p-teal) 80%, var(--p-on-filled));
+  --label-pink-bg: color-mix(in srgb, var(--p-pink) 14%, transparent);
+  --label-pink-fg: color-mix(in srgb, var(--p-pink) 82%, var(--p-on-filled));
+  --label-gray-bg: color-mix(in srgb, var(--p-gray) 18%, transparent);
+  --label-gray-fg: color-mix(in srgb, var(--p-gray) 88%, var(--p-on-filled));
+  --label-lime-bg: color-mix(in srgb, var(--p-lime) 14%, transparent);
+  --label-lime-fg: color-mix(in srgb, var(--p-lime) 78%, var(--p-on-filled));
+  --label-indigo-bg: color-mix(in srgb, var(--p-indigo) 14%, transparent);
+  --label-indigo-fg: color-mix(in srgb, var(--p-indigo) 82%, var(--p-on-filled));
   --brand-border: color-mix(in srgb, var(--kaban) 42%, transparent);
   --brand-border-strong: var(--kaban);
   --brand-hover-bg: color-mix(in srgb, var(--kaban) 22%, transparent);
@@ -152,6 +167,16 @@
   --label-purple-fg: #5b4580;
   --label-red-bg: color-mix(in srgb, var(--p-red) 12%, var(--p-on-filled));
   --label-red-fg: var(--error);
+  --label-teal-bg: color-mix(in srgb, var(--p-teal) 22%, var(--p-on-filled));
+  --label-teal-fg: #0d6b62;
+  --label-pink-bg: color-mix(in srgb, var(--p-pink) 18%, var(--p-on-filled));
+  --label-pink-fg: #9c3268;
+  --label-gray-bg: color-mix(in srgb, var(--p-gray) 20%, var(--p-on-filled));
+  --label-gray-fg: #5f6368;
+  --label-lime-bg: color-mix(in srgb, var(--p-lime) 22%, var(--p-on-filled));
+  --label-lime-fg: #4a7c1b;
+  --label-indigo-bg: color-mix(in srgb, var(--p-indigo) 16%, var(--p-on-filled));
+  --label-indigo-fg: #3d4db8;
   --brand-border: color-mix(in srgb, var(--kaban) 28%, transparent);
   --brand-border-strong: var(--kaban);
   --brand-hover-bg: color-mix(in srgb, var(--kaban) 22%, transparent);
@@ -240,7 +265,7 @@ body {
   flex-shrink: 0;
   display: block;
   border-radius: var(--radius-sm);
-  object-fit: contain;
+  object-fit: cover;
 }
 
 .logo-ai {
@@ -538,7 +563,8 @@ body {
 
 .card:active { cursor: grabbing; }
 
-.card.dragging {
+.card.dragging,
+.card.card-drag-denied {
   opacity: 0.45;
   transform: rotate(1.5deg) scale(0.97);
   box-shadow: none;
@@ -558,8 +584,13 @@ body {
 .card.drag-over-below::after { bottom: -6px; }
 
 .card.card-pinned {
+  cursor: grab;
   border-color: color-mix(in srgb, var(--kaban) 48%, var(--border));
   background: color-mix(in srgb, var(--kaban) 6%, var(--surface-2));
+}
+
+.card.card-pinned.card-drag-denied {
+  cursor: not-allowed;
 }
 
 .card.card-pinned::before {
@@ -625,6 +656,11 @@ body {
 .label-orange { background: var(--label-orange-bg); color: var(--label-orange-fg); }
 .label-purple { background: var(--label-purple-bg); color: var(--label-purple-fg); }
 .label-red    { background: var(--label-red-bg);    color: var(--label-red-fg); }
+.label-teal   { background: var(--label-teal-bg);   color: var(--label-teal-fg); }
+.label-pink   { background: var(--label-pink-bg);   color: var(--label-pink-fg); }
+.label-gray   { background: var(--label-gray-bg);   color: var(--label-gray-fg); }
+.label-lime   { background: var(--label-lime-bg);   color: var(--label-lime-fg); }
+.label-indigo { background: var(--label-indigo-bg); color: var(--label-indigo-fg); }
 
 .card-title {
   font-size: var(--text-sm);
@@ -1067,8 +1103,7 @@ body {
   <div class="logo">
     <img
       class="logo-mark"
-      src="/favicon-32x32.png"
-      srcset="/favicon-32x32.png 1x, /apple-touch-icon.png 2x"
+      src="/img/kaban.png"
       width="28"
       height="28"
       alt=""
@@ -1169,13 +1204,7 @@ body {
     <div class="label-add-row">
       <input type="text" class="label-row-emoji" id="new-label-emoji" placeholder="🏷️" maxlength="4" aria-label="Emoji">
       <input type="text" id="new-label-name" placeholder="Label name">
-      <select id="new-label-tone" aria-label="Color">
-        <option value="green">Green</option>
-        <option value="blue">Blue</option>
-        <option value="orange">Orange</option>
-        <option value="purple">Purple</option>
-        <option value="red">Red</option>
-      </select>
+      <select id="new-label-tone" aria-label="Color"></select>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeLabelsModal()">Close</button>
@@ -1307,9 +1336,43 @@ const DEFAULT_LABELS = [
   { id: 'orange', name: 'Urgent', tone: 'orange', emoji: '🟡' },
   { id: 'purple', name: 'AI', tone: 'purple', emoji: '🟣' },
   { id: 'red', name: 'Bug', tone: 'red', emoji: '🔴' },
+  { id: 'teal', name: 'Design', tone: 'teal', emoji: '🔷' },
+  { id: 'pink', name: 'Feature', tone: 'pink', emoji: '🩷' },
+  { id: 'gray', name: 'Low', tone: 'gray', emoji: '⚪' },
+  { id: 'lime', name: 'Quick', tone: 'lime', emoji: '⚡' },
+  { id: 'indigo', name: 'Research', tone: 'indigo', emoji: '🔮' },
 ];
 
-const LABEL_TONES = ['green', 'blue', 'orange', 'purple', 'red'];
+const LABEL_TONES = [
+  'green', 'blue', 'orange', 'purple', 'red',
+  'teal', 'pink', 'gray', 'lime', 'indigo',
+];
+
+const LABEL_TONE_NAMES = {
+  green: 'Green',
+  blue: 'Blue',
+  orange: 'Orange',
+  purple: 'Purple',
+  red: 'Red',
+  teal: 'Teal',
+  pink: 'Pink',
+  gray: 'Gray',
+  lime: 'Lime',
+  indigo: 'Indigo',
+};
+
+function labelToneOptionsHtml(selected) {
+  return LABEL_TONES.map(
+    tone => `<option value="${tone}"${tone === selected ? ' selected' : ''}>${LABEL_TONE_NAMES[tone]}</option>`
+  ).join('');
+}
+
+function syncLabelToneSelects(selected = 'purple') {
+  const addSelect = document.getElementById('new-label-tone');
+  if (addSelect) {
+    addSelect.innerHTML = labelToneOptionsHtml(selected);
+  }
+}
 
 function c() { return Math.random().toString(36).slice(2,9); }
 
@@ -1599,7 +1662,7 @@ function renderLabelsManager() {
       <input type="text" class="label-row-emoji" value="${escHtml(def.emoji)}" maxlength="4" aria-label="Emoji">
       <input type="text" class="label-row-name" value="${escHtml(def.name)}" aria-label="Name">
       <select class="label-row-tone" aria-label="Color">
-        ${LABEL_TONES.map(t => `<option value="${t}"${t === def.tone ? ' selected' : ''}>${t}</option>`).join('')}
+        ${labelToneOptionsHtml(def.tone)}
       </select>
       <div class="label-row-actions">
         <button type="button" class="card-btn" title="Save" onclick="saveLabelRow('${def.id}')">
@@ -1618,7 +1681,7 @@ function openLabelsModal() {
   document.getElementById('labels-modal').classList.add('open');
   document.getElementById('new-label-name').value = '';
   document.getElementById('new-label-emoji').value = '🏷️';
-  document.getElementById('new-label-tone').value = 'purple';
+  syncLabelToneSelects('purple');
 }
 
 function closeLabelsModal() {
@@ -2007,7 +2070,19 @@ function buildCard(card) {
   if (card.flame) classes.push('card-flame');
   el.className = classes.join(' ');
   el.dataset.cardId = card.id;
-  el.draggable = true;
+  el.draggable = !card.pinned;
+
+  if (card.pinned) {
+    const showDragDenied = e => {
+      if (e.button !== 0) return;
+      if (e.target.closest('.card-btn')) return;
+      el.classList.add('card-drag-denied');
+    };
+    const hideDragDenied = () => el.classList.remove('card-drag-denied');
+    el.addEventListener('mousedown', showDragDenied);
+    el.addEventListener('mouseup', hideDragDenied);
+    el.addEventListener('mouseleave', hideDragDenied);
+  }
 
   const labelsHtml = (card.labels || []).map(id => {
     const def = getLabel(id);
@@ -2198,9 +2273,18 @@ function startColRename(colId, titleEl) {
   });
 }
 
+function getCardById(cardId) {
+  return state.cards.find(c => c.id === cardId);
+}
+
 function setupDnd() {
   document.querySelectorAll('.card').forEach(card => {
     card.addEventListener('dragstart', e => {
+      const data = getCardById(card.dataset.cardId);
+      if (data?.pinned) {
+        e.preventDefault();
+        return;
+      }
       dragId = card.dataset.cardId;
       dragColIdFrom = null;
       setTimeout(() => card.classList.add('dragging'), 0);
@@ -2231,9 +2315,13 @@ function setupDnd() {
       e.stopPropagation();
       if (!dragId || card.dataset.cardId === dragId) return;
       const targetId = card.dataset.cardId;
-      const dragCard = state.cards.find(c => c.id === dragId);
-      const targetCard = state.cards.find(c => c.id === targetId);
+      const dragCard = getCardById(dragId);
+      const targetCard = getCardById(targetId);
       if (!dragCard || !targetCard) return;
+      if (dragCard.pinned && dragCard.col !== targetCard.col) {
+        toast('Unpin the task to move it to another column');
+        return;
+      }
       const rect = card.getBoundingClientRect();
       const midY = rect.top + rect.height / 2;
       const insertBefore = e.clientY < midY;
@@ -2270,10 +2358,14 @@ function setupDnd() {
       if (dragColIdFrom) return;
       e.preventDefault();
       if (!dragId) return;
-      const dragCard = state.cards.find(c => c.id === dragId);
+      const dragCard = getCardById(dragId);
       if (!dragCard) return;
       // Only move to col if dropped on empty area (no card target)
       if (!e.target.closest('.card')) {
+        if (dragCard.pinned && dragCard.col !== colId) {
+          toast('Unpin the task to move it to another column');
+          return;
+        }
         dragCard.col = colId;
         render();
         persistCardMove(dragCard.id, colId)
@@ -2604,6 +2696,7 @@ document.addEventListener('keydown', e => {
 
 // INIT
 async function init() {
+  syncLabelToneSelects('purple');
   setupBoardColDnD();
   renderDotPicker();
   await loadBoard();
