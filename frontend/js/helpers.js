@@ -20,9 +20,6 @@ export function sortCardsForColumn(cards) {
     .map(entry => entry.card);
 }
 
-export function cardIconDots(kind) {
-  const count = (kind === 'edit' || kind === 'delete' || kind === 'plus') ? 5 : 4;
-  let dots = '';
-  for (let i = 0; i < count; i++) dots += '<i></i>';
-  return `<span class="icon-dots icon-dots-${kind}" aria-hidden="true">${dots}</span>`;
+export function formatColCount(n) {
+  return String(n).padStart(2, '0');
 }

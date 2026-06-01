@@ -8,8 +8,6 @@ import {
 } from './persist.js';
 import { loadBoard } from './api.js';
 import { render } from './render.js';
-import { toast } from './ui.js';
-
 function cloneCard(card) {
   return {
     id: card.id,
@@ -132,10 +130,8 @@ export async function performUndo() {
   try {
     await applyUndo(entry);
     render();
-    toast('Undone');
   } catch (err) {
     console.warn('Undo failed:', err);
-    toast('Undo failed');
     await loadBoard();
     render();
   } finally {

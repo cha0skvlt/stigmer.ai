@@ -5,10 +5,10 @@ import {
   LABEL_TONES,
   LABEL_TONE_NAMES,
 } from './state.js';
-import { escHtml, cardIconDots } from './helpers.js';
+import { escHtml } from './helpers.js';
+import { icon } from './icons.js';
 import { apiFetch, loadBoard } from './api.js';
 import { render } from './render.js';
-import { toast } from './ui.js';
 
 function labelToneOptionsHtml(selected) {
   return LABEL_TONES.map(
@@ -130,7 +130,7 @@ export function renderLabelsManager() {
       </span>
       ${labelToneControlHtml(def.tone, `onchange="onLabelRowToneChange(this, '${def.id}')"`)}
       <button type="button" class="label-row-delete card-btn card-btn-delete" title="Delete" onclick="deleteLabel('${def.id}')">
-        ${cardIconDots('delete')}
+        ${icon('trash-2', { size: 14 })}
       </button>
     </div>
   `).join('');
@@ -194,7 +194,7 @@ export function saveLabelRow(id) {
   const def = getLabel(id);
   if (!def) return;
   const name = row.querySelector('.label-row-name').value.trim();
-  if (!name) { toast('Label name is required'); return; }
+  if (!name) return;
   const tone = row.querySelector('.label-row-tone').value;
   def.name = name;
   def.tone = LABEL_TONES.includes(tone) ? tone : 'purple';
@@ -215,7 +215,6 @@ export function addLabelFromDraft() {
   document.getElementById('new-label-name').value = '';
   fitLabelNameInput(document.getElementById('new-label-name'));
   persistLabels();
-  toast(`Label "${name}" added`);
   document.getElementById('new-label-name').focus();
 }
 
@@ -244,7 +243,6 @@ export function deleteLabel(id) {
   const def = getLabel(id);
   if (!def) return;
   if (state.labels.length <= 1) {
-    toast('At least one label must remain');
     return;
   }
   state.labels = state.labels.filter(l => l.id !== id);
@@ -253,7 +251,6 @@ export function deleteLabel(id) {
   }
   state.selectedLabels = state.selectedLabels.filter(lid => lid !== id);
   persistLabels();
-  toast(`Label "${def.name}" deleted`);
 }
 
 async function persistLabels() {
@@ -267,7 +264,6 @@ async function persistLabels() {
     });
   } catch (err) {
     console.warn('Failed to save labels:', err);
-    toast('Failed to save labels');
     await loadBoard();
     render();
   }

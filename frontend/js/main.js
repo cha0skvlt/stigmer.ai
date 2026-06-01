@@ -8,8 +8,7 @@ import { setupCtxClickClose } from './cards.js';
 import { render } from './render.js';
 import { updateUndoButton } from './undo.js';
 import {
-  renderDotPicker,
-  selectDot,
+  initTheme,
   toggleTheme,
   setupKeyboardShortcuts,
   setupDevToolsGuard,
@@ -104,7 +103,6 @@ Object.assign(window, {
   saveColumn,
   saveLabelRow,
   saveLabelsModal,
-  selectDot,
   sendAiMessage,
   toggleAskAI,
   toggleBoardLock,
@@ -116,12 +114,12 @@ Object.assign(window, {
 });
 
 async function init() {
+  initTheme();
   setupDevToolsGuard();
   syncLabelToneSelects('purple');
   setupBoardColDnD();
   setupCtxClickClose();
   setupKeyboardShortcuts();
-  renderDotPicker();
   await loadBoard();
   connectBoardWs();
   ensureDefaultColumns();

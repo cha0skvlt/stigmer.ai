@@ -7,7 +7,25 @@ import {
   persistCardMove,
 } from './persist.js';
 import { render } from './render.js';
-import { toast } from './ui.js';
+import { icon } from './icons.js';
+
+function setFromTextBusy(busy) {
+  const btn = document.getElementById('from-text-submit');
+  if (!btn) return;
+  btn.disabled = busy;
+  btn.classList.toggle('is-busy', busy);
+  if (busy) {
+    btn.innerHTML = `${icon('loader-2', { size: 14, className: 'icon-busy icon-spin' })} Thinking…`;
+  } else {
+    btn.textContent = 'Create task';
+  }
+}
+
+function setAiBusy(busy) {
+  state.aiBusy = busy;
+  document.getElementById('ask-ai-btn')?.classList.toggle('is-busy', busy);
+  document.querySelector('.ai-send-btn')?.classList.toggle('is-busy', busy);
+}
 
 export function resolveColumnId(ref) {
   if (!ref) return null;
@@ -139,9 +157,7 @@ export async function createTaskFromText() {
   if (!text || state.fromTextBusy) return;
 
   state.fromTextBusy = true;
-  const btn = document.getElementById('from-text-submit');
-  btn.disabled = true;
-  btn.textContent = 'Thinking…';
+  setFromTextBusy(true);
 
   try {
     const result = await apiFetch('/api/agent/from-text', {
@@ -149,29 +165,24 @@ export async function createTaskFromText() {
       body: JSON.stringify({ raw_text: text, board_state: boardPayload() }),
     });
     if (!result.actions?.length) {
-      toast(result.message || 'Could not create task');
       return;
     }
     const changed = await applyActions(result.actions);
     if (changed) {
       render();
       closeFromTextModal();
-      toast(result.message || 'Task created');
-    } else {
-      toast('Could not apply task — unknown column');
     }
   } catch (err) {
-    toast(`Error: ${err.message || err}`);
+    console.warn('From text failed:', err);
   } finally {
     state.fromTextBusy = false;
-    btn.disabled = false;
-    btn.textContent = 'Create task';
+    setFromTextBusy(false);
   }
 }
 
 export async function runAiCommand(cmd) {
   if (state.aiBusy) return;
-  state.aiBusy = true;
+  setAiBusy(true);
   try {
     const result = await apiFetch('/api/agent', {
       method: 'POST',
@@ -186,7 +197,7 @@ export async function runAiCommand(cmd) {
   } catch (err) {
     addAiMsg('assistant', `Error: ${err.message || err}`);
   } finally {
-    state.aiBusy = false;
+    setAiBusy(false);
   }
 }
 

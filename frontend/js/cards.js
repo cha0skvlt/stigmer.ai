@@ -1,5 +1,6 @@
 import { state } from './state.js';
-import { escHtml, cardIconDots, getCardById, sortCardsForColumn } from './helpers.js';
+import { escHtml, getCardById, sortCardsForColumn } from './helpers.js';
+import { icon } from './icons.js';
 import { apiFetch, loadBoard } from './api.js';
 import {
   persistCardCreate,
@@ -10,7 +11,6 @@ import {
 import { captureMoveState, pushUndo, pushMoveUndo } from './undo.js';
 import { renderLabelPicker } from './labels.js';
 import { render } from './render.js';
-import { toast } from './ui.js';
 
 function getLabel(id) {
   return state.labels.find(l => l.id === id);
@@ -44,22 +44,24 @@ export function buildCard(card) {
     .map(def => `<span class="label label-${def.tone}">${escHtml(def.name)}</span>`)
     .join('');
   el.innerHTML = `
-    ${labelsHtml ? `<div class="card-labels">${labelsHtml}</div>` : ''}
     <div class="card-title">${escHtml(card.title)}</div>
-    <div class="card-meta">
-      <div class="card-actions">
-        <button class="card-btn card-btn-delete" onclick="event.stopPropagation(); confirmDeleteCard('${card.id}')" title="Delete">
-          ${cardIconDots('delete')}
-        </button>
-        <button class="card-btn card-btn-edit" onclick="event.stopPropagation(); editCard('${card.id}')" title="Edit">
-          ${cardIconDots('edit')}
-        </button>
-        <button class="card-btn card-btn-flame${card.flame ? ' active' : ''}" onclick="event.stopPropagation(); toggleCardFlame('${card.id}')" title="${card.flame ? 'Remove flame' : 'Mark as flame'}">
-          ${cardIconDots('flame')}
-        </button>
-        <button class="card-btn card-btn-pin${card.pinned ? ' active' : ''}" onclick="event.stopPropagation(); toggleCardPin('${card.id}')" title="${card.pinned ? 'Unpin' : 'Pin to top'}">
-          ${cardIconDots('pin')}
-        </button>
+    <div class="card-bottom">
+      ${labelsHtml ? `<div class="card-labels">${labelsHtml}</div>` : ''}
+      <div class="card-meta">
+        <div class="card-actions">
+          <button class="card-btn card-btn-delete" onclick="event.stopPropagation(); confirmDeleteCard('${card.id}')" title="Delete">
+            ${icon('trash-2', { size: 14 })}
+          </button>
+          <button class="card-btn card-btn-edit" onclick="event.stopPropagation(); editCard('${card.id}')" title="Edit">
+            ${icon('pencil', { size: 14 })}
+          </button>
+          <button class="card-btn card-btn-flame${card.flame ? ' active' : ''}" onclick="event.stopPropagation(); toggleCardFlame('${card.id}')" title="${card.flame ? 'Remove flame' : 'Mark as flame'}">
+            ${icon('flame', { size: 14, className: 'icon-flame' })}
+          </button>
+          <button class="card-btn card-btn-pin${card.pinned ? ' active' : ''}" onclick="event.stopPropagation(); toggleCardPin('${card.id}')" title="${card.pinned ? 'Unpin' : 'Pin to top'}">
+            ${icon('pin', { size: 14, className: 'icon-pin' })}
+          </button>
+        </div>
       </div>
     </div>
   `;
@@ -117,7 +119,6 @@ export function setupDnd() {
       const targetCard = getCardById(targetId);
       if (!dragCard || !targetCard) return;
       if (dragCard.pinned && dragCard.col !== targetCard.col) {
-        toast('Unpin the task to move it to another column');
         return;
       }
       const rect = card.getBoundingClientRect();
@@ -134,7 +135,6 @@ export function setupDnd() {
       render();
       persistCardMove(dragCard.id, dragCard.col).catch(err => {
         console.warn('Failed to move card:', err);
-        toast('Failed to move card');
         loadBoard();
       });
     });
@@ -160,20 +160,16 @@ export function setupDnd() {
       if (!dragCard) return;
       if (!e.target.closest('.card')) {
         if (dragCard.pinned && dragCard.col !== colId) {
-          toast('Unpin the task to move it to another column');
           return;
         }
         dragCard.col = colId;
         pushMoveUndo(state.dragUndoSnapshot);
         state.dragUndoSnapshot = null;
         render();
-        persistCardMove(dragCard.id, colId)
-          .then(() => toast(`Moved to ${state.columns.find(c => c.id === colId)?.title}`))
-          .catch(err => {
-            console.warn('Failed to move card:', err);
-            toast('Failed to move card');
-            loadBoard();
-          });
+        persistCardMove(dragCard.id, colId).catch(err => {
+          console.warn('Failed to move card:', err);
+          loadBoard();
+        });
       }
       col.classList.remove('drop-target');
     });
@@ -248,11 +244,9 @@ export function saveCard() {
           Object.assign(card, serverCard);
           pushUndo({ type: 'edit', cardId: card.id, before, arrayIndex });
           render();
-          toast('Task updated');
         })
         .catch(err => {
           console.warn('Failed to update task:', err);
-          toast('Failed to update task');
           loadBoard();
         });
     }
@@ -267,11 +261,9 @@ export function saveCard() {
         state.cards.push(serverCard);
         pushUndo({ type: 'create', cardId: serverCard.id });
         render();
-        toast('Task added');
       })
       .catch(err => {
         console.warn('Failed to create task:', err);
-        toast('Failed to create task');
       });
   }
   const wasEdit = !!state.editingCardId;
@@ -288,13 +280,10 @@ function deleteCard(id) {
   state.cards.splice(idx, 1);
   pushUndo({ type: 'delete', card: snapshot, insertIndex: idx });
   render();
-  persistCardDelete(id)
-    .then(() => toast('Task deleted'))
-    .catch(err => {
-      console.warn('Failed to delete task:', err);
-      toast('Failed to delete task');
-      loadBoard();
-    });
+  persistCardDelete(id).catch(err => {
+    console.warn('Failed to delete task:', err);
+    loadBoard();
+  });
 }
 
 export function confirmDeleteCard(id) {
@@ -326,13 +315,10 @@ export function toggleCardPin(id) {
   if (!card) return;
   card.pinned = !card.pinned;
   render();
-  persistCardPatch(id, { pinned: card.pinned })
-    .then(() => toast(card.pinned ? 'Task pinned' : 'Task unpinned'))
-    .catch(err => {
-      console.warn('Failed to toggle pin:', err);
-      toast('Failed to update task');
-      loadBoard();
-    });
+  persistCardPatch(id, { pinned: card.pinned }).catch(err => {
+    console.warn('Failed to toggle pin:', err);
+    loadBoard();
+  });
 }
 
 export function toggleCardFlame(id) {
@@ -340,13 +326,10 @@ export function toggleCardFlame(id) {
   if (!card) return;
   card.flame = !card.flame;
   render();
-  persistCardPatch(id, { flame: card.flame })
-    .then(() => toast(card.flame ? 'Task marked as flame' : 'Flame removed'))
-    .catch(err => {
-      console.warn('Failed to toggle flame:', err);
-      toast('Failed to update task');
-      loadBoard();
-    });
+  persistCardPatch(id, { flame: card.flame }).catch(err => {
+    console.warn('Failed to toggle flame:', err);
+    loadBoard();
+  });
 }
 
 export function toggleLabel(el) {
@@ -414,13 +397,10 @@ export function ctxMove(dir) {
   card.col = state.columns[newIdx].id;
   pushMoveUndo(before);
   render();
-  persistCardMove(card.id, card.col)
-    .then(() => toast(`Moved to ${state.columns[newIdx].title}`))
-    .catch(err => {
-      console.warn('Failed to move card:', err);
-      toast('Failed to move card');
-      loadBoard();
-    });
+  persistCardMove(card.id, card.col).catch(err => {
+    console.warn('Failed to move card:', err);
+    loadBoard();
+  });
 }
 
 export function setupCtxClickClose() {

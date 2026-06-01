@@ -4,12 +4,11 @@ import {
   COLOR_PALETTE,
   COLUMN_PALETTE,
 } from './state.js';
-import { escHtml, sortCardsForColumn, cardIconDots } from './helpers.js';
+import { escHtml, sortCardsForColumn, formatColCount } from './helpers.js';
+import { icon } from './icons.js';
 import { apiFetch, loadBoard } from './api.js';
 import { render } from './render.js';
 import { buildCard } from './cards.js';
-import { toast } from './ui.js';
-import { renderDotPicker } from './ui.js';
 
 export function ensureDefaultColumns() {
   const defaults = COLUMN_PALETTE.map(col => ({ ...col }));
@@ -46,14 +45,16 @@ export function buildCol(col, cards) {
   el.className = state.boardLocked ? 'col' : 'col col-draggable';
   el.dataset.colId = col.id;
   if (!state.boardLocked) el.draggable = true;
-  const titleClass = state.boardLocked ? 'col-title' : 'col-title col-title-editable';
+  const titleClass = [
+    'col-title',
+    state.boardLocked ? '' : 'col-title-editable',
+  ].filter(Boolean).join(' ');
   el.innerHTML = `
     <div class="col-header">
-      <div class="col-dot" style="background:${col.color}"></div>
       <span class="${titleClass}" data-col-id="${col.id}">${escHtml(col.title)}</span>
-      <span class="col-count">${cards.length}</span>
-      <button class="col-add" onclick="openAddCard('${col.id}')" title="Add task">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+      <span class="col-count">${formatColCount(cards.length)}</span>
+      <button class="col-add" onclick="openAddCard('${col.id}')" title="Add task" aria-label="Add task">
+        ${icon('plus', { size: 12 })}
       </button>
     </div>
     <div class="cards" data-col-id="${col.id}"></div>
@@ -65,7 +66,7 @@ export function buildCol(col, cards) {
     footer.className = 'col-footer';
     footer.innerHTML = `
       <button type="button" class="col-delete-btn" onclick="event.stopPropagation(); confirmDeleteColumn('${col.id}')" title="Delete column" aria-label="Delete column">
-        ${cardIconDots('delete')}
+        ${icon('trash-2', { size: 14 })}
       </button>
     `;
     el.appendChild(footer);
@@ -143,10 +144,8 @@ export function setupBoardColDnD() {
         method: 'POST',
         body: JSON.stringify({ index: finalIndex }),
       })
-        .then(() => toast('Column moved'))
         .catch(err => {
           console.warn('Failed to move column:', err);
-          toast('Failed to move column');
           loadBoard();
         });
     } else {
@@ -206,12 +205,8 @@ function startColRename(colId, titleEl) {
         method: 'PATCH',
         body: JSON.stringify({ title: name || col.title }),
       })
-        .then(() => {
-          if (name) toast(`Column renamed to "${name}"`);
-        })
         .catch(err => {
           console.warn('Failed to rename column:', err);
-          toast('Failed to rename column');
           loadBoard();
         });
     } else {
@@ -227,11 +222,9 @@ function startColRename(colId, titleEl) {
 
 export function confirmDeleteColumn(colId) {
   if (state.boardLocked) {
-    toast('Unlock board layout to delete columns');
     return;
   }
   if (state.columns.length <= 1) {
-    toast('Cannot delete the last column');
     return;
   }
   const col = state.columns.find(c => c.id === colId);
@@ -263,22 +256,17 @@ export async function executeDeleteColumn() {
     state.columns = state.columns.filter(c => c.id !== colId);
     state.cards = state.cards.filter(c => c.col !== colId);
     render();
-    toast(`Column “${title}” deleted`);
   } catch (err) {
     console.warn('Failed to delete column:', err);
-    toast(err?.message || 'Failed to delete column');
     loadBoard();
   }
 }
 
 export function openAddColModal() {
   if (state.boardLocked) {
-    toast('Unlock board layout to add columns');
     return;
   }
   document.getElementById('col-name-input').value = '';
-  state.selectedDotColor = COLOR_PALETTE.purple;
-  renderDotPicker();
   document.getElementById('col-modal').classList.add('open');
   setTimeout(() => document.getElementById('col-name-input').focus(), 50);
 }
@@ -290,15 +278,13 @@ export async function saveColumn() {
   try {
     const col = await apiFetch('/api/columns', {
       method: 'POST',
-      body: JSON.stringify({ slug: id, title: name, color: state.selectedDotColor }),
+      body: JSON.stringify({ slug: id, title: name, color: COLOR_PALETTE.neutral }),
     });
     state.columns.push(col);
     closeColModal();
     render();
-    toast(`Column "${name}" created`);
   } catch (err) {
     console.warn('Failed to create column:', err);
-    toast('Failed to create column');
   }
 }
 

@@ -17,15 +17,6 @@ export const COLUMN_PALETTE = [
   { id: 'done', title: 'Done', color: COLOR_PALETTE.green },
 ];
 
-export const DOT_PICKER_COLORS = [
-  COLOR_PALETTE.purple,
-  COLOR_PALETTE.green,
-  COLOR_PALETTE.blue,
-  COLOR_PALETTE.amber,
-  COLOR_PALETTE.red,
-  COLOR_PALETTE.neutral,
-];
-
 export const DEFAULT_LABELS = [
   { id: 'green', name: 'Done', tone: 'green', emoji: '🟢' },
   { id: 'blue', name: 'Review', tone: 'blue', emoji: '🔵' },
@@ -63,7 +54,6 @@ export let state = {
   labels: [],
   editingCardId: null,
   selectedLabels: [],
-  selectedDotColor: COLOR_PALETTE.purple,
   currentColForAdd: null,
   undoRecording: true,
   dragId: null,

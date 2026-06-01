@@ -1,4 +1,4 @@
-import { state, DOT_PICKER_COLORS } from './state.js';
+import { state } from './state.js';
 import {
   closeCardModal,
   closeConfirmDeleteCardModal,
@@ -14,39 +14,56 @@ import { render } from './render.js';
 import { performUndo } from './undo.js';
 import { openAddCard } from './cards.js';
 import { openFromTextModal } from './ai.js';
+import { icon } from './icons.js';
 
-export function renderDotPicker() {
-  const picker = document.getElementById('dot-picker');
-  if (!picker) return;
-  const selected = state.selectedDotColor;
-  picker.innerHTML = DOT_PICKER_COLORS.map(color => {
-    const active = color === selected ? '2px solid var(--text)' : '2px solid transparent';
-    return `<span style="width:20px;height:20px;border-radius:50%;background:${color};cursor:pointer;border:${active}" data-color="${color}" onclick="selectDot(this)"></span>`;
-  }).join('');
+const THEME_STORAGE_KEY = 'kaban-theme';
+
+const THEME_META_COLORS = {
+  dark: '#0b0c0e',
+  light: '#d4cebf',
+};
+
+export function getStoredTheme() {
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    return stored === 'light' ? 'light' : 'dark';
+  } catch {
+    return 'dark';
+  }
 }
 
-export function selectDot(el) {
-  state.selectedDotColor = el.dataset.color;
-  renderDotPicker();
+function updateThemeMeta(theme) {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', THEME_META_COLORS[theme]);
+}
+
+function updateThemeIcon(theme) {
+  const themeEl = document.getElementById('theme-icon');
+  if (themeEl) {
+    themeEl.outerHTML = icon(theme === 'dark' ? 'moon' : 'sun', { size: 14, id: 'theme-icon' });
+  }
+}
+
+export function applyTheme(theme) {
+  const next = theme === 'light' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+  } catch {
+    /* private mode / blocked storage */
+  }
+  updateThemeMeta(next);
+  updateThemeIcon(next);
+}
+
+export function initTheme() {
+  applyTheme(getStoredTheme());
 }
 
 export function toggleTheme() {
-  const html = document.documentElement;
-  const current = html.getAttribute('data-theme');
+  const current = document.documentElement.getAttribute('data-theme');
   const next = current === 'dark' ? 'light' : 'dark';
-  html.setAttribute('data-theme', next);
-  document.getElementById('theme-icon').innerHTML = next === 'dark'
-    ? '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>'
-    : '<circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>';
-}
-
-export function toast(msg) {
-  const container = document.getElementById('toasts');
-  const el = document.createElement('div');
-  el.className = 'toast';
-  el.textContent = msg;
-  container.appendChild(el);
-  setTimeout(() => el.remove(), 2500);
+  applyTheme(next);
 }
 
 function restoreBoardFocus() {
@@ -154,14 +171,14 @@ export function setupDevToolsGuard() {
 
 export function updateLockButton() {
   const btn = document.getElementById('board-lock-btn');
-  const icon = document.getElementById('lock-icon');
-  if (!btn || !icon) return;
+  const iconEl = document.getElementById('lock-icon');
+  if (!btn || !iconEl) return;
   btn.classList.toggle('active', !state.boardLocked);
   btn.title = state.boardLocked ? 'Unlock board layout' : 'Lock board layout';
   btn.setAttribute('aria-label', btn.title);
-  icon.innerHTML = state.boardLocked
-    ? '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'
-    : '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-1"/>';
+  iconEl.outerHTML = state.boardLocked
+    ? icon('lock', { size: 14, id: 'lock-icon' })
+    : icon('lock-open', { size: 14, id: 'lock-icon' });
 }
 
 export function toggleBoardLock() {
@@ -169,5 +186,4 @@ export function toggleBoardLock() {
   localStorage.setItem('kaban_board_locked', state.boardLocked ? 'true' : 'false');
   updateLockButton();
   render();
-  toast(state.boardLocked ? 'Board layout locked — tasks still move' : 'Board layout unlocked — drag or double-click columns');
 }

@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { buildCol, setupColDrag, updateColSelects, openAddColModal } from './columns.js';
 import { buildCard, setupDnd } from './cards.js';
-import { cardIconDots } from './helpers.js';
+import { icon } from './icons.js';
 
 export function render() {
   const board = document.getElementById('board');
@@ -13,7 +13,7 @@ export function render() {
   if (!state.boardLocked) {
     const addBtn = document.createElement('button');
     addBtn.className = 'add-col-btn';
-    addBtn.innerHTML = cardIconDots('plus');
+    addBtn.innerHTML = icon('plus', { size: 16 });
     addBtn.title = 'Add column';
     addBtn.setAttribute('aria-label', 'Add column');
     addBtn.onclick = openAddColModal;

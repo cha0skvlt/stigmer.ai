@@ -314,19 +314,41 @@ make test-cov
 
 ## Design tokens (UI)
 
-Single palette in `frontend/css/tokens.css` (`:root` + two themes). Avoid one-off hex in components.
+Industrial-monochrome design language in `frontend/css/tokens.css`. All colours, spacing, radii, type, and motion live there — `components.css`, `overlays.css`, and `responsive.css` reference tokens only (no raw hex).
+
+### Graphite scale (dark default)
 
 | Token | Hex | Use |
 |-------|-----|-----|
-| `p-neutral` | `#888690` | Backlog column |
-| `p-blue` | `#58a6ff` | Ideas column, Review labels |
-| `p-amber` | `#e3b341` | To Do column, Urgent labels |
-| `p-purple` | `#6750a4` | Accent, In Progress, AI labels |
-| `p-red` | `#f85149` | Production, Bug labels |
-| `p-green` | `#3fb950` | Done labels |
-| `p-bronze` | `#b8845a` | KABAN brand, Ask AI, header tools |
+| `--bg` | `#0b0c0e` | Board background |
+| `--surface-1` | `#121316` | Column body |
+| `--surface-2` | `#16181b` | Card body |
+| `--surface-3` | `#1b1d21` | Hover / raised |
+| `--hairline` | `#26282c` | 0.5px seams |
+| `--edge-light` | `#34373d` | 1px top edge highlight |
+| `--text-primary` | `#e6e6e8` | Card titles |
+| `--text-secondary` | `#9a9ca2` | Labels, icons at rest |
+| `--text-muted` | `#5d5f65` | Counters, hints |
+| `--accent` | `#8b6fd6` | Ask AI, focus, active |
 
-Themes (`data-theme="dark"` / `light`) remap surfaces, text, shadows, and `color-mix` derivatives. Backend column defaults mirror `COLOR_PALETTE` in `backend/store.py`.
+Light theme (`[data-theme="light"]`) remaps the same tokens to warm NieR-style sepia (faded paper ~`#d4cebf` canvas, `#e3ddce` cards). Column headers use `--text-secondary` in both themes (no per-column hue). Colour on the board lives in label pills, `--signal`, and interactive accent only (purple in dark, sepia inversion `#45413a` / `#d4cebf` in light).
+
+### Spacing, radii, type, motion
+
+| Group | Tokens |
+|-------|--------|
+| Spacing (4px base) | `--space-1` … `--space-8` (4–48px) |
+| Radii (sharp) | `--radius-sm` 3px, `--radius-md` 5px, `--radius-lg` 6px |
+| Type | `--text-xs` 11px … `--text-md` 15px; weights 400/500 only; `--font-mono` for counters |
+| Motion | `--dur-fast` 120ms, `--dur` 180ms, `--ease` |
+
+Label/tag outline pills use `--label-{tone}-fg` and `--label-{tone}-border` for all 10 tones.
+
+### Icons
+
+Stroke icons from **Lucide** as inline SVG in `frontend/js/icons.js` (no CDN, no webfont). `stroke="currentColor"` inherits theme and text colour.
+
+Backend column defaults still mirror `COLOR_PALETTE` in `backend/store.py` (unchanged).
 
 ---
 

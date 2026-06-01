@@ -1,185 +1,178 @@
 :root {
-  /* Typography & layout */
-  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
-  --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
-  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
-  --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
-  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
-  --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem;
-  --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.75rem;
-  --radius-full: 9999px;
-  --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  /* Spacing — 4px base */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-8: 48px;
+
+  /* Radii — sharp */
+  --radius-sm: 3px;
+  --radius-md: 5px;
+  --radius-lg: 6px;
+
+  /* Type */
+  --text-xs: 11px;
+  --text-tag: 10px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
   --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --line-height-tight: 1.45;
+  --line-height-body: 1.7;
+  --tracking-wide: 0.12em;
+  --tracking-wider: 0.14em;
 
-  /* Kanban — columns share viewport width (no horizontal scroll) */
+  /* Motion */
+  --dur-fast: 120ms;
+  --dur: 180ms;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: var(--dur) var(--ease);
+
+  /* Layout */
   --board-gap: var(--space-4);
+  --size-tool: 32px;
+  --size-icon-sm: 14px;
+  --size-icon-md: 16px;
+  --size-icon-flame: 18px;
+  --icon-stroke: 1.75;
+  --tracking-wordmark: 0.14em;
 
-  /*
-   * KABAN AI — fixed palette (6 hues + brand). Use only these in UI & columns.
-   * | Token      | Role                          |
-   * |------------|-------------------------------|
-   * | p-neutral  | Backlog column, muted chrome  |
-   * | p-blue     | Ideas, Review labels          |
-   * | p-amber    | To Do, Urgent labels          |
-   * | p-purple   | Accent, In Progress, AI labels|
-   * | p-red      | Production, Bug labels        |
-   * | p-green    | Done labels                   |
-   * | p-bronze   | KABAN brand, Ask AI, tools    |
-   */
-  --p-neutral: #888690;
-  --p-blue: #58a6ff;
-  --p-amber: #e3b341;
-  --p-purple: #6750a4;
-  --p-red: #f85149;
-  --p-green: #3fb950;
-  --p-teal: #2eb8a8;
-  --p-pink: #e06c9f;
-  --p-gray: #9aa0a6;
-  --p-lime: #8bc34a;
-  --p-indigo: #6e7ff2;
-  --p-bronze: #b8845a;
-  --p-bronze-dark: #8f6238;
-  --p-on-filled: #ffffff;
-  --p-on-bronze: #f5e6d8;
+  /* Borders / elevation */
+  --border-hairline: 0.5px solid var(--hairline);
+  --border-col: 0.5px solid var(--hairline-col);
+  --border-pinned: 1px solid var(--edge-light);
+  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --card-shadow-light: 0 1px 2px rgba(60, 50, 30, 0.12);
+  --card-pad: var(--space-3);
+
+  /* Tag pill sizing */
+  --label-pad-y: 2px;
+  --label-pad-x: 6px;
+
+  /* Signal — single brightest alarm colour on the board */
+  --signal: #f05551;
+  --signal-edge: #5a2723;
+
+  /* Label / tag tones — outline pills */
+  --label-default-fg: #9a9ca2;
+  --label-default-border: #34373d;
+  --label-green-fg: #6fb88a;
+  --label-green-border: #324a38;
+  --label-blue-fg: #82a9d6;
+  --label-blue-border: #334858;
+  --label-orange-fg: var(--signal);
+  --label-orange-border: var(--signal-edge);
+  --label-purple-fg: var(--label-default-fg);
+  --label-purple-border: var(--label-default-border);
+  --label-red-fg: var(--signal);
+  --label-red-border: var(--signal-edge);
+  --label-teal-fg: #72b8ab;
+  --label-teal-border: #2e4540;
+  --label-pink-fg: #d094b0;
+  --label-pink-border: #45343e;
+  --label-gray-fg: #9a9ca2;
+  --label-gray-border: #34373d;
+  --label-lime-fg: #9ab872;
+  --label-lime-border: #3a482e;
+  --label-indigo-fg: #929ed4;
+  --label-indigo-border: #333858;
+
+  /* Layout widths / heights */
+  --modal-width: 400px;
+  --modal-width-wide: 540px;
+  --modal-width-labels: 480px;
+  --modal-max-height: 760px;
+  --ai-panel-width: 340px;
+  --ctx-min-width: 160px;
+  --textarea-from-text-min: 180px;
+  --textarea-desc-min: 200px;
+  --ai-input-max-height: 100px;
+  --labels-list-max: 400px;
+  --label-name-max: 14rem;
 }
 
 [data-theme="dark"] {
-  --bg: #0a090c;
-  --surface: #111014;
-  --surface-2: #16141a;
-  --surface-3: #1e1c23;
-  --surface-4: #27252d;
-  --border: color-mix(in srgb, var(--p-on-filled) 10%, transparent);
-  --text: #cec9d4;
-  --text-muted: #9b959f;
-  --text-faint: #6b656f;
-  --accent: #a89ad4;
-  --accent-hover: #beb0e0;
-  --accent-dim: color-mix(in srgb, var(--p-purple) 18%, transparent);
-  --primary-btn-bg: color-mix(in srgb, var(--p-purple) 55%, #0a090c);
-  --primary-btn-fg: #e2daf5;
-  --primary-btn-hover: color-mix(in srgb, var(--p-purple) 65%, #16141a);
-  --kaban: color-mix(in srgb, var(--p-bronze) 88%, var(--p-on-filled));
-  --kaban-dark: color-mix(in srgb, var(--p-bronze-dark) 90%, #0a090c);
-  --kaban-dim: color-mix(in srgb, var(--p-bronze) 10%, transparent);
-  --success: color-mix(in srgb, var(--p-green) 82%, var(--p-on-filled));
-  --warning: color-mix(in srgb, var(--p-amber) 82%, var(--p-on-filled));
-  --error: color-mix(in srgb, var(--p-red) 78%, var(--p-on-filled));
-  --error-dim: color-mix(in srgb, var(--p-red) 12%, transparent);
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55);
-  --shadow-card: none;
+  --bg: #0b0c0e;
+  --surface-header: #121316;
+  --surface-1: #121316;
+  --surface-2: #16181b;
+  --surface-3: #1b1d21;
+  --hairline: #26282c;
+  --hairline-col: #26282c;
+  --edge-light: #34373d;
+  --text-primary: #e6e6e8;
+  --text-secondary: #9a9ca2;
+  --text-muted: #5d5f65;
+  --accent: #8b6fd6;
+  --accent-fg: #e6e6e8;
+  --accent-edge: #a98ee8;
+  --accent-icon: var(--accent);
+  --accent-dim: color-mix(in srgb, var(--accent) 14%, transparent);
   --scrim: rgba(0, 0, 0, 0.72);
-  --label-green-bg: color-mix(in srgb, var(--p-green) 14%, transparent);
-  --label-green-fg: var(--success);
-  --label-green-border: color-mix(in srgb, var(--p-green) 34%, transparent);
-  --label-blue-bg: color-mix(in srgb, var(--p-blue) 14%, transparent);
-  --label-blue-fg: color-mix(in srgb, var(--p-blue) 75%, var(--p-on-filled));
-  --label-blue-border: color-mix(in srgb, var(--p-blue) 34%, transparent);
-  --label-orange-bg: color-mix(in srgb, var(--p-amber) 12%, transparent);
-  --label-orange-fg: var(--warning);
-  --label-orange-border: color-mix(in srgb, var(--p-amber) 34%, transparent);
-  --label-purple-bg: color-mix(in srgb, var(--p-purple) 12%, transparent);
-  --label-purple-fg: var(--accent);
-  --label-purple-border: color-mix(in srgb, var(--p-purple) 34%, transparent);
-  --label-red-bg: color-mix(in srgb, var(--p-red) 12%, transparent);
-  --label-red-fg: var(--error);
-  --label-red-border: color-mix(in srgb, var(--p-red) 34%, transparent);
-  --label-teal-bg: color-mix(in srgb, var(--p-teal) 14%, transparent);
-  --label-teal-fg: color-mix(in srgb, var(--p-teal) 80%, var(--p-on-filled));
-  --label-teal-border: color-mix(in srgb, var(--p-teal) 34%, transparent);
-  --label-pink-bg: color-mix(in srgb, var(--p-pink) 14%, transparent);
-  --label-pink-fg: color-mix(in srgb, var(--p-pink) 82%, var(--p-on-filled));
-  --label-pink-border: color-mix(in srgb, var(--p-pink) 34%, transparent);
-  --label-gray-bg: color-mix(in srgb, var(--p-gray) 18%, transparent);
-  --label-gray-fg: color-mix(in srgb, var(--p-gray) 88%, var(--p-on-filled));
-  --label-gray-border: color-mix(in srgb, var(--p-gray) 34%, transparent);
-  --label-lime-bg: color-mix(in srgb, var(--p-lime) 14%, transparent);
-  --label-lime-fg: color-mix(in srgb, var(--p-lime) 78%, var(--p-on-filled));
-  --label-lime-border: color-mix(in srgb, var(--p-lime) 34%, transparent);
-  --label-indigo-bg: color-mix(in srgb, var(--p-indigo) 14%, transparent);
-  --label-indigo-fg: color-mix(in srgb, var(--p-indigo) 82%, var(--p-on-filled));
-  --label-indigo-border: color-mix(in srgb, var(--p-indigo) 34%, transparent);
-  --brand-border: color-mix(in srgb, var(--kaban) 42%, transparent);
-  --brand-border-strong: var(--kaban);
-  --brand-hover-bg: color-mix(in srgb, var(--kaban) 22%, transparent);
-  --brand-hover-shadow: 0 2px 10px color-mix(in srgb, var(--kaban) 18%, transparent);
-  --brand-active-shadow: 0 2px 12px color-mix(in srgb, var(--kaban) 35%, transparent);
-  --magic-shadow: var(--shadow-md);
-  --elevated-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --scrollbar-track: var(--surface-2);
-  --scrollbar-thumb: var(--surface-4);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-faint) 45%, var(--surface-4));
+  --danger-fg: #d07a6e;
+  --danger-border: #46322e;
+  --danger-dim: color-mix(in srgb, var(--danger-fg) 10%, transparent);
+  --scrollbar-track: var(--surface-1);
+  --scrollbar-thumb: var(--surface-3);
+  --scrollbar-thumb-hover: var(--edge-light);
+  --drop-indicator: var(--accent);
 }
 
 [data-theme="light"] {
-  --bg: #e8eaed;
-  --surface: #f1f3f4;
-  --surface-2: #ffffff;
-  --surface-3: #e3e6ea;
-  --surface-4: #dadce0;
-  --border: color-mix(in srgb, #1f1f1f 12%, transparent);
-  --text: #1f1f1f;
-  --text-muted: #5f6368;
-  --text-faint: #80868b;
-  --accent: var(--p-purple);
-  --accent-hover: #5a4590;
-  --accent-dim: color-mix(in srgb, var(--p-purple) 10%, transparent);
-  --primary-btn-bg: var(--p-purple);
-  --primary-btn-fg: var(--p-on-filled);
-  --primary-btn-hover: #5a4590;
-  --kaban: #8b5e3c;
-  --kaban-dark: #6d4a2f;
-  --kaban-dim: color-mix(in srgb, var(--p-bronze) 10%, transparent);
-  --success: #137333;
-  --warning: #b06000;
-  --error: #c5221f;
-  --error-dim: color-mix(in srgb, var(--p-red) 8%, transparent);
-  --shadow-sm: 0 1px 2px rgba(60, 64, 67, 0.12), 0 1px 3px rgba(60, 64, 67, 0.08);
-  --shadow-md: 0 1px 2px rgba(60, 64, 67, 0.15), 0 2px 6px rgba(60, 64, 67, 0.1);
-  --shadow-lg: 0 4px 8px rgba(60, 64, 67, 0.12), 0 8px 24px rgba(60, 64, 67, 0.1);
-  --shadow-card: 0 1px 2px rgba(60, 64, 67, 0.06);
-  --scrim: rgba(31, 31, 31, 0.32);
-  --label-green-bg: color-mix(in srgb, var(--p-green) 28%, var(--p-on-filled));
-  --label-green-fg: var(--success);
-  --label-green-border: color-mix(in srgb, var(--p-green) 38%, transparent);
-  --label-blue-bg: color-mix(in srgb, var(--p-blue) 22%, var(--p-on-filled));
-  --label-blue-fg: #185abc;
-  --label-blue-border: color-mix(in srgb, var(--p-blue) 38%, transparent);
-  --label-orange-bg: color-mix(in srgb, var(--p-amber) 18%, var(--p-on-filled));
-  --label-orange-fg: var(--warning);
-  --label-orange-border: color-mix(in srgb, var(--p-amber) 38%, transparent);
-  --label-purple-bg: color-mix(in srgb, var(--p-purple) 15%, var(--p-on-filled));
-  --label-purple-fg: #5b4580;
-  --label-purple-border: color-mix(in srgb, var(--p-purple) 38%, transparent);
-  --label-red-bg: color-mix(in srgb, var(--p-red) 12%, var(--p-on-filled));
-  --label-red-fg: var(--error);
-  --label-red-border: color-mix(in srgb, var(--p-red) 38%, transparent);
-  --label-teal-bg: color-mix(in srgb, var(--p-teal) 22%, var(--p-on-filled));
-  --label-teal-fg: #0d6b62;
-  --label-teal-border: color-mix(in srgb, var(--p-teal) 38%, transparent);
-  --label-pink-bg: color-mix(in srgb, var(--p-pink) 18%, var(--p-on-filled));
-  --label-pink-fg: #9c3268;
-  --label-pink-border: color-mix(in srgb, var(--p-pink) 38%, transparent);
-  --label-gray-bg: color-mix(in srgb, var(--p-gray) 20%, var(--p-on-filled));
-  --label-gray-fg: #5f6368;
-  --label-gray-border: color-mix(in srgb, var(--p-gray) 38%, transparent);
-  --label-lime-bg: color-mix(in srgb, var(--p-lime) 22%, var(--p-on-filled));
-  --label-lime-fg: #4a7c1b;
-  --label-lime-border: color-mix(in srgb, var(--p-lime) 38%, transparent);
-  --label-indigo-bg: color-mix(in srgb, var(--p-indigo) 16%, var(--p-on-filled));
-  --label-indigo-fg: #3d4db8;
-  --label-indigo-border: color-mix(in srgb, var(--p-indigo) 38%, transparent);
-  --brand-border: color-mix(in srgb, var(--kaban) 28%, transparent);
-  --brand-border-strong: var(--kaban);
-  --brand-hover-bg: color-mix(in srgb, var(--kaban) 22%, transparent);
-  --brand-hover-shadow: var(--shadow-sm);
-  --brand-active-shadow: 0 2px 12px color-mix(in srgb, var(--kaban) 35%, transparent);
-  --magic-shadow: var(--shadow-sm);
-  --elevated-shadow: var(--shadow-sm);
-  --scrollbar-track: var(--surface-3);
-  --scrollbar-thumb: var(--surface-4);
-  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-faint) 55%, var(--surface-4));
-}
+  --bg: #d4cebf;
+  --surface-header: #ccc6b6;
+  --surface-1: #d2cbb8;
+  --surface-2: #e3ddce;
+  --surface-3: #ece6d8;
+  --hairline: #bdb6a4;
+  --hairline-col: #b0a996;
+  --edge-light: #ebe5d6;
+  --text-primary: #3d3a34;
+  --text-secondary: #56524a;
+  --text-muted: #928c7d;
+  --signal: #a8412f;
+  --signal-edge: #6e3028;
+  --border-pinned: 1px solid var(--hairline);
+  --accent: #45413a;
+  --accent-fg: #d4cebf;
+  --accent-edge: #5c5850;
+  --accent-icon: var(--accent);
+  --accent-dim: color-mix(in srgb, var(--accent) 12%, transparent);
+  --scrim: rgba(61, 58, 52, 0.36);
+  --danger-fg: #a8412f;
+  --danger-border: #8a5a50;
+  --danger-dim: color-mix(in srgb, var(--danger-fg) 10%, transparent);
+  --scrollbar-track: var(--surface-1);
+  --scrollbar-thumb: var(--hairline);
+  --scrollbar-thumb-hover: var(--text-muted);
+  --drop-indicator: var(--accent);
 
+  --label-default-fg: #56524a;
+  --label-default-border: #bdb6a4;
+  --label-green-fg: #5a7050;
+  --label-green-border: #9aaa8c;
+  --label-blue-fg: #4e6878;
+  --label-blue-border: #98a8b0;
+  --label-orange-fg: var(--signal);
+  --label-orange-border: var(--signal-edge);
+  --label-purple-fg: var(--label-default-fg);
+  --label-purple-border: var(--label-default-border);
+  --label-red-fg: var(--signal);
+  --label-red-border: var(--signal-edge);
+  --label-teal-fg: #4a7068;
+  --label-teal-border: #94b0a8;
+  --label-pink-fg: #886070;
+  --label-pink-border: #c0a8b0;
+  --label-gray-fg: #56524a;
+  --label-gray-border: #bdb6a4;
+  --label-lime-fg: #687850;
+  --label-lime-border: #a8b090;
+  --label-indigo-fg: #585878;
+  --label-indigo-border: #a0a0b8;
+}
