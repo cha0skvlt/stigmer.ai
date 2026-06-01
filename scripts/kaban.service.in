@@ -1,0 +1,17 @@
+[Unit]
+Description=kaban.ai — KABAN Kanban board (Docker Compose)
+Documentation=https://github.com/cha0skvlt/kaban.ai
+After=docker.service network-online.target
+Wants=docker.service network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=@KABAN_ROOT@
+Environment=KABAN_DAEMON_QUIET=1
+ExecStart=@KABAN_ROOT@/scripts/kaban.ai start
+ExecStop=@KABAN_ROOT@/scripts/kaban.ai stop
+TimeoutStartSec=600
+
+[Install]
+WantedBy=@SYSTEMD_WANTED_BY@

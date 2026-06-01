@@ -1,0 +1,185 @@
+:root {
+  /* Typography & layout */
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+  --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+  --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+  --space-1: 0.25rem; --space-2: 0.5rem; --space-3: 0.75rem; --space-4: 1rem;
+  --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem;
+  --radius-sm: 0.375rem; --radius-md: 0.5rem; --radius-lg: 0.75rem;
+  --radius-full: 9999px;
+  --transition: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* Kanban — columns share viewport width (no horizontal scroll) */
+  --board-gap: var(--space-4);
+
+  /*
+   * KABAN AI — fixed palette (6 hues + brand). Use only these in UI & columns.
+   * | Token      | Role                          |
+   * |------------|-------------------------------|
+   * | p-neutral  | Backlog column, muted chrome  |
+   * | p-blue     | Ideas, Review labels          |
+   * | p-amber    | To Do, Urgent labels          |
+   * | p-purple   | Accent, In Progress, AI labels|
+   * | p-red      | Production, Bug labels        |
+   * | p-green    | Done labels                   |
+   * | p-bronze   | KABAN brand, Ask AI, tools    |
+   */
+  --p-neutral: #888690;
+  --p-blue: #58a6ff;
+  --p-amber: #e3b341;
+  --p-purple: #6750a4;
+  --p-red: #f85149;
+  --p-green: #3fb950;
+  --p-teal: #2eb8a8;
+  --p-pink: #e06c9f;
+  --p-gray: #9aa0a6;
+  --p-lime: #8bc34a;
+  --p-indigo: #6e7ff2;
+  --p-bronze: #b8845a;
+  --p-bronze-dark: #8f6238;
+  --p-on-filled: #ffffff;
+  --p-on-bronze: #f5e6d8;
+}
+
+[data-theme="dark"] {
+  --bg: #0a090c;
+  --surface: #111014;
+  --surface-2: #16141a;
+  --surface-3: #1e1c23;
+  --surface-4: #27252d;
+  --border: color-mix(in srgb, var(--p-on-filled) 10%, transparent);
+  --text: #cec9d4;
+  --text-muted: #9b959f;
+  --text-faint: #6b656f;
+  --accent: #a89ad4;
+  --accent-hover: #beb0e0;
+  --accent-dim: color-mix(in srgb, var(--p-purple) 18%, transparent);
+  --primary-btn-bg: color-mix(in srgb, var(--p-purple) 55%, #0a090c);
+  --primary-btn-fg: #e2daf5;
+  --primary-btn-hover: color-mix(in srgb, var(--p-purple) 65%, #16141a);
+  --kaban: color-mix(in srgb, var(--p-bronze) 88%, var(--p-on-filled));
+  --kaban-dark: color-mix(in srgb, var(--p-bronze-dark) 90%, #0a090c);
+  --kaban-dim: color-mix(in srgb, var(--p-bronze) 10%, transparent);
+  --success: color-mix(in srgb, var(--p-green) 82%, var(--p-on-filled));
+  --warning: color-mix(in srgb, var(--p-amber) 82%, var(--p-on-filled));
+  --error: color-mix(in srgb, var(--p-red) 78%, var(--p-on-filled));
+  --error-dim: color-mix(in srgb, var(--p-red) 12%, transparent);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.55);
+  --shadow-card: none;
+  --scrim: rgba(0, 0, 0, 0.72);
+  --label-green-bg: color-mix(in srgb, var(--p-green) 14%, transparent);
+  --label-green-fg: var(--success);
+  --label-green-border: color-mix(in srgb, var(--p-green) 34%, transparent);
+  --label-blue-bg: color-mix(in srgb, var(--p-blue) 14%, transparent);
+  --label-blue-fg: color-mix(in srgb, var(--p-blue) 75%, var(--p-on-filled));
+  --label-blue-border: color-mix(in srgb, var(--p-blue) 34%, transparent);
+  --label-orange-bg: color-mix(in srgb, var(--p-amber) 12%, transparent);
+  --label-orange-fg: var(--warning);
+  --label-orange-border: color-mix(in srgb, var(--p-amber) 34%, transparent);
+  --label-purple-bg: color-mix(in srgb, var(--p-purple) 12%, transparent);
+  --label-purple-fg: var(--accent);
+  --label-purple-border: color-mix(in srgb, var(--p-purple) 34%, transparent);
+  --label-red-bg: color-mix(in srgb, var(--p-red) 12%, transparent);
+  --label-red-fg: var(--error);
+  --label-red-border: color-mix(in srgb, var(--p-red) 34%, transparent);
+  --label-teal-bg: color-mix(in srgb, var(--p-teal) 14%, transparent);
+  --label-teal-fg: color-mix(in srgb, var(--p-teal) 80%, var(--p-on-filled));
+  --label-teal-border: color-mix(in srgb, var(--p-teal) 34%, transparent);
+  --label-pink-bg: color-mix(in srgb, var(--p-pink) 14%, transparent);
+  --label-pink-fg: color-mix(in srgb, var(--p-pink) 82%, var(--p-on-filled));
+  --label-pink-border: color-mix(in srgb, var(--p-pink) 34%, transparent);
+  --label-gray-bg: color-mix(in srgb, var(--p-gray) 18%, transparent);
+  --label-gray-fg: color-mix(in srgb, var(--p-gray) 88%, var(--p-on-filled));
+  --label-gray-border: color-mix(in srgb, var(--p-gray) 34%, transparent);
+  --label-lime-bg: color-mix(in srgb, var(--p-lime) 14%, transparent);
+  --label-lime-fg: color-mix(in srgb, var(--p-lime) 78%, var(--p-on-filled));
+  --label-lime-border: color-mix(in srgb, var(--p-lime) 34%, transparent);
+  --label-indigo-bg: color-mix(in srgb, var(--p-indigo) 14%, transparent);
+  --label-indigo-fg: color-mix(in srgb, var(--p-indigo) 82%, var(--p-on-filled));
+  --label-indigo-border: color-mix(in srgb, var(--p-indigo) 34%, transparent);
+  --brand-border: color-mix(in srgb, var(--kaban) 42%, transparent);
+  --brand-border-strong: var(--kaban);
+  --brand-hover-bg: color-mix(in srgb, var(--kaban) 22%, transparent);
+  --brand-hover-shadow: 0 2px 10px color-mix(in srgb, var(--kaban) 18%, transparent);
+  --brand-active-shadow: 0 2px 12px color-mix(in srgb, var(--kaban) 35%, transparent);
+  --magic-shadow: var(--shadow-md);
+  --elevated-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --scrollbar-track: var(--surface-2);
+  --scrollbar-thumb: var(--surface-4);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-faint) 45%, var(--surface-4));
+}
+
+[data-theme="light"] {
+  --bg: #e8eaed;
+  --surface: #f1f3f4;
+  --surface-2: #ffffff;
+  --surface-3: #e3e6ea;
+  --surface-4: #dadce0;
+  --border: color-mix(in srgb, #1f1f1f 12%, transparent);
+  --text: #1f1f1f;
+  --text-muted: #5f6368;
+  --text-faint: #80868b;
+  --accent: var(--p-purple);
+  --accent-hover: #5a4590;
+  --accent-dim: color-mix(in srgb, var(--p-purple) 10%, transparent);
+  --primary-btn-bg: var(--p-purple);
+  --primary-btn-fg: var(--p-on-filled);
+  --primary-btn-hover: #5a4590;
+  --kaban: #8b5e3c;
+  --kaban-dark: #6d4a2f;
+  --kaban-dim: color-mix(in srgb, var(--p-bronze) 10%, transparent);
+  --success: #137333;
+  --warning: #b06000;
+  --error: #c5221f;
+  --error-dim: color-mix(in srgb, var(--p-red) 8%, transparent);
+  --shadow-sm: 0 1px 2px rgba(60, 64, 67, 0.12), 0 1px 3px rgba(60, 64, 67, 0.08);
+  --shadow-md: 0 1px 2px rgba(60, 64, 67, 0.15), 0 2px 6px rgba(60, 64, 67, 0.1);
+  --shadow-lg: 0 4px 8px rgba(60, 64, 67, 0.12), 0 8px 24px rgba(60, 64, 67, 0.1);
+  --shadow-card: 0 1px 2px rgba(60, 64, 67, 0.06);
+  --scrim: rgba(31, 31, 31, 0.32);
+  --label-green-bg: color-mix(in srgb, var(--p-green) 28%, var(--p-on-filled));
+  --label-green-fg: var(--success);
+  --label-green-border: color-mix(in srgb, var(--p-green) 38%, transparent);
+  --label-blue-bg: color-mix(in srgb, var(--p-blue) 22%, var(--p-on-filled));
+  --label-blue-fg: #185abc;
+  --label-blue-border: color-mix(in srgb, var(--p-blue) 38%, transparent);
+  --label-orange-bg: color-mix(in srgb, var(--p-amber) 18%, var(--p-on-filled));
+  --label-orange-fg: var(--warning);
+  --label-orange-border: color-mix(in srgb, var(--p-amber) 38%, transparent);
+  --label-purple-bg: color-mix(in srgb, var(--p-purple) 15%, var(--p-on-filled));
+  --label-purple-fg: #5b4580;
+  --label-purple-border: color-mix(in srgb, var(--p-purple) 38%, transparent);
+  --label-red-bg: color-mix(in srgb, var(--p-red) 12%, var(--p-on-filled));
+  --label-red-fg: var(--error);
+  --label-red-border: color-mix(in srgb, var(--p-red) 38%, transparent);
+  --label-teal-bg: color-mix(in srgb, var(--p-teal) 22%, var(--p-on-filled));
+  --label-teal-fg: #0d6b62;
+  --label-teal-border: color-mix(in srgb, var(--p-teal) 38%, transparent);
+  --label-pink-bg: color-mix(in srgb, var(--p-pink) 18%, var(--p-on-filled));
+  --label-pink-fg: #9c3268;
+  --label-pink-border: color-mix(in srgb, var(--p-pink) 38%, transparent);
+  --label-gray-bg: color-mix(in srgb, var(--p-gray) 20%, var(--p-on-filled));
+  --label-gray-fg: #5f6368;
+  --label-gray-border: color-mix(in srgb, var(--p-gray) 38%, transparent);
+  --label-lime-bg: color-mix(in srgb, var(--p-lime) 22%, var(--p-on-filled));
+  --label-lime-fg: #4a7c1b;
+  --label-lime-border: color-mix(in srgb, var(--p-lime) 38%, transparent);
+  --label-indigo-bg: color-mix(in srgb, var(--p-indigo) 16%, var(--p-on-filled));
+  --label-indigo-fg: #3d4db8;
+  --label-indigo-border: color-mix(in srgb, var(--p-indigo) 38%, transparent);
+  --brand-border: color-mix(in srgb, var(--kaban) 28%, transparent);
+  --brand-border-strong: var(--kaban);
+  --brand-hover-bg: color-mix(in srgb, var(--kaban) 22%, transparent);
+  --brand-hover-shadow: var(--shadow-sm);
+  --brand-active-shadow: 0 2px 12px color-mix(in srgb, var(--kaban) 35%, transparent);
+  --magic-shadow: var(--shadow-sm);
+  --elevated-shadow: var(--shadow-sm);
+  --scrollbar-track: var(--surface-3);
+  --scrollbar-thumb: var(--surface-4);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--text-faint) 55%, var(--surface-4));
+}
+

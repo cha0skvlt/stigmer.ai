@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+# kaban.ai — start/stop KABAN Docker stack (systemd / launchd / manual).
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+LOG_DIR="${KABAN_LOG_DIR:-$ROOT/logs}"
+LOG_FILE="${KABAN_LOG_FILE:-$LOG_DIR/kaban.ai.log}"
+COMPOSE=(docker compose -f docker-compose.yml)
+
+mkdir -p "$LOG_DIR"
+
+log() {
+  local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+  printf '%s\n' "$msg" >>"$LOG_FILE"
+  if [[ "${KABAN_DAEMON_QUIET:-}" != "1" ]]; then
+    printf '%s\n' "$msg"
+  fi
+}
+
+load_env() {
+  if [[ ! -f .env ]]; then
+    log "ERROR: .env not found in $ROOT — run: cp .env.example .env"
+    exit 1
+  fi
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+}
+
+wait_for_url() {
+  local url="$1" label="$2" tries="${3:-120}"
+  for ((i = 1; i <= tries; i++)); do
+    if curl -sf "$url" >/dev/null 2>&1; then
+      log "$label is ready"
+      return 0
+    fi
+    sleep 1
+  done
+  log "ERROR: $label did not become ready ($url)"
+  return 1
+}
+
+wait_for_docker() {
+  for ((i = 1; i <= 120; i++)); do
+    if docker info >/dev/null 2>&1; then
+      log "Docker is running"
+      return 0
+    fi
+    if [[ "$(uname -s)" == "Darwin" && $i -eq 1 ]]; then
+      if [[ -d /Applications/OrbStack.app ]]; then
+        log "Starting OrbStack..."
+        open -a OrbStack >/dev/null 2>&1 || true
+      elif [[ -d /Applications/Docker.app ]]; then
+        log "Starting Docker Desktop..."
+        open -a Docker >/dev/null 2>&1 || true
+      fi
+    fi
+    sleep 1
+  done
+  log "ERROR: Docker did not become ready"
+  return 1
+}
+
+is_ollama_mode() {
+  local url="${OPENAI_BASE_URL:-}"
+  local key="${OPENAI_API_KEY:-}"
+  [[ "$key" == "ollama" ]] && return 0
+  [[ "$url" == *":11434"* ]] && return 0
+  [[ "$url" == *"localhost"* && "$url" == *"11434"* ]] && return 0
+  [[ "$url" == *"127.0.0.1"* && "$url" == *"11434"* ]] && return 0
+  return 1
+}
+
+ensure_ollama() {
+  local base="http://127.0.0.1:11434"
+  if curl -sf "$base/api/tags" >/dev/null 2>&1; then
+    log "Ollama is running"
+    return 0
+  fi
+  log "Ollama is not responding — trying to start"
+  if command -v ollama >/dev/null 2>&1; then
+    nohup ollama serve >>"$LOG_FILE" 2>&1 &
+  elif [[ "$(uname -s)" == "Darwin" && -d /Applications/Ollama.app ]]; then
+    open -a Ollama >/dev/null 2>&1 || true
+  else
+    log "WARN: Ollama not found — AI features may fail until Ollama is started"
+    return 0
+  fi
+  wait_for_url "$base/api/tags" "Ollama" 90 || log "WARN: Ollama did not start in time"
+}
+
+cmd_start() {
+  load_env
+  wait_for_docker
+  if is_ollama_mode; then
+    log "Mode: local Ollama"
+    ensure_ollama
+  else
+    log "Mode: external AI API"
+  fi
+  log "Starting kaban.ai stack..."
+  if [[ "${KABAN_DAEMON_BUILD:-}" == "1" ]]; then
+    "${COMPOSE[@]}" up --build -d >>"$LOG_FILE" 2>&1
+  else
+    "${COMPOSE[@]}" up -d >>"$LOG_FILE" 2>&1
+  fi
+  wait_for_url "http://localhost:8080/api/health" "kaban.ai" 120
+  log "kaban.ai running — http://localhost:8080"
+}
+
+cmd_stop() {
+  log "Stopping kaban.ai stack..."
+  "${COMPOSE[@]}" down >>"$LOG_FILE" 2>&1 || true
+  log "kaban.ai stopped"
+}
+
+cmd_status() {
+  "${COMPOSE[@]}" ps
+  if curl -sf http://localhost:8080/api/health >/dev/null 2>&1; then
+    log "Health: OK (http://localhost:8080/api/health)"
+  else
+    log "Health: not responding"
+    exit 1
+  fi
+}
+
+cmd_restart() {
+  cmd_stop
+  cmd_start
+}
+
+usage() {
+  cat <<EOF
+Usage: kaban.ai {start|stop|restart|status}
+
+  start    Wait for Docker, start stack (detached)
+  stop     docker compose down
+  restart  stop then start
+  status   compose ps + health check
+
+Environment:
+  KABAN_DAEMON_BUILD=1  run 'compose up --build' on start
+  KABAN_LOG_FILE        default: $ROOT/logs/kaban.ai.log
+EOF
+}
+
+main() {
+  local cmd="${1:-}"
+  case "$cmd" in
+    start) cmd_start ;;
+    stop) cmd_stop ;;
+    restart) cmd_restart ;;
+    status) KABAN_DAEMON_QUIET=0 cmd_status ;;
+    -h|--help|help) usage ;;
+    *)
+      usage >&2
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"

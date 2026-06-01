@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>ai.kaban.ai</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>@KABAN_ROOT@/scripts/kaban.ai</string>
+    <string>start</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>@KABAN_ROOT@</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>KABAN_DAEMON_QUIET</key>
+    <string>1</string>
+    <key>PATH</key>
+    <string>/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>@KABAN_ROOT@/logs/kaban.ai.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>@KABAN_ROOT@/logs/kaban.ai.err.log</string>
+</dict>
+</plist>

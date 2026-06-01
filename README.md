@@ -10,7 +10,6 @@
 **Personal Kanban board with a built-in LLM agent** — paste messy text, get a structured task. Runs on Ollama locally or any OpenAI-compatible API.
 
 <p>
-  <a href="https://github.com/cha0skvlt/kaban.ai/releases/latest"><img src="https://img.shields.io/github/v/release/cha0skvlt/kaban.ai?label=Latest" alt="Latest release"></a>
   <a href="https://github.com/cha0skvlt/kaban.ai/actions/workflows/ci.yml"><img src="https://github.com/cha0skvlt/kaban.ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
   <img src="https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white" alt="Python 3.12+">
@@ -32,12 +31,11 @@
 - [Highlights](#highlights)
 - [Key feature: task from text](#key-feature-task-from-text)
 - [Stack](#stack)
-- [Quick start (production)](#quick-start-production)
-- [Quick start (developers)](#quick-start-developers)
+- [Quick start](#quick-start)
 - [Environment](#environment)
 - [API](#api)
 - [Docker](#docker)
-- [Releases](#releases)
+- [Auto-start (daemon)](#auto-start-daemon)
 - [Development](#development)
 - [Design tokens (UI)](#design-tokens-ui)
 - [Limitations](#limitations)
@@ -111,7 +109,7 @@ curl -s http://localhost:8080/api/agent/from-text \
 
 | Layer | Technology |
 |-------|------------|
-| UI | Single `frontend/kanban.html` — vanilla JS, no bundler |
+| UI | `frontend/kanban.html` + native ES modules in `frontend/js/` (no bundler) |
 | API | [FastAPI](https://fastapi.tiangolo.com/) + httpx |
 | Storage | PostgreSQL 16 (Docker Compose) |
 | LLM | OpenAI-compatible chat completions |
@@ -119,43 +117,32 @@ curl -s http://localhost:8080/api/agent/from-text \
 
 ---
 
-## Quick start (production)
-
-**Latest release:** [v1.1](https://github.com/cha0skvlt/kaban.ai/releases/tag/v1.1) — pre-built **multi-arch** images on [GHCR](https://github.com/cha0skvlt/kaban.ai/pkgs/container/kaban.ai) (`amd64` + `arm64` for Mac, Windows, and Linux).
+## Quick start
 
 **Prerequisites:** [Docker](https://docs.docker.com/) (Docker Desktop, OrbStack, or Linux engine) and [Ollama](https://ollama.com/) on the host (for local LLM mode), or an external OpenAI-compatible API in `.env`.
 
-No Python or `make` required — only Docker Compose and a `.env` file.
-
 ```bash
-mkdir kaban && cd kaban
-curl -fsSLO https://github.com/cha0skvlt/kaban.ai/releases/download/v1.1/docker-compose.release.yml
-curl -fsSLO https://raw.githubusercontent.com/cha0skvlt/kaban.ai/v1.1/.env.example
+git clone https://github.com/cha0skvlt/kaban.ai.git
+cd kaban.ai
 cp .env.example .env
-# edit .env — set KANBAN_API_KEY and your LLM provider
+make setup
 ollama pull qwen2.5-coder:32b   # if using local Ollama
-docker compose -f docker-compose.release.yml up -d
+make start
 open http://localhost:8080
 ```
 
-From a full git clone you can also run:
+**Auto-start at boot / login:**
 
 ```bash
-cp .env.example .env
-docker compose -f docker-compose.release.yml up -d
+make install-daemon
 ```
 
-| Image | Tag |
-|-------|-----|
-| Backend API | `ghcr.io/cha0skvlt/kaban.ai:1.1-backend` |
-| Nginx + UI | `ghcr.io/cha0skvlt/kaban.ai:1.1-nginx` |
-
-Board data is stored in the Docker volume `kaban-postgres-data` (not on the host filesystem by default).
+Board data lives in the Docker volume `kaban-postgres-data`.
 
 ### Backup / restore
 
 - **Backup**: `make backup` (uses `pg_dump | gzip`)
-- **Restore**: `gunzip -c backups/<file>.sql.gz | psql "$DATABASE_URL"`
+- **Restore**: `gunzip -c backup/<file>.sql.gz | psql "$DATABASE_URL"`
 
 ### Migrate from JSON (v1.x)
 
@@ -169,28 +156,6 @@ python3 scripts/import_json_to_pg.py
 ```
 
 The script renames the JSON file to `*.bak.<timestamp>` after a successful import.
-
----
-
-## Quick start (developers)
-
-Clone the repo for local builds, hot-reload on `frontend/`, tests, and `make start` (Ollama + Docker checks).
-
-```bash
-git clone https://github.com/cha0skvlt/kaban.ai.git
-cd kaban.ai
-cp .env.example .env
-make setup
-ollama pull qwen2.5-coder:32b
-make start
-open http://localhost:8080
-```
-
-```bash
-make dev            # backend only on :8000 (no Docker)
-make test-cov       # 130+ tests, 100% coverage gate
-make lint
-```
 
 ---
 
@@ -247,9 +212,7 @@ localStorage.setItem('kanban_api_key', 'your-key')
 
 ## Docker
 
-### Development compose (`docker-compose.yml`)
-
-Builds images locally; mounts `frontend/` for live UI edits.
+Single compose file — builds locally; mounts `frontend/kanban.html`, `frontend/css/`, and `frontend/js/` for live UI edits (no bundler).
 
 ```bash
 make start     # build + start (Ollama checks, detached)
@@ -262,38 +225,54 @@ make restart   # rebuild + restart
 |------|--------|
 | Proxy | Nginx serves the UI and forwards `/api/*` to FastAPI |
 | Ollama | Runs on the **host**; containers use `host.docker.internal` (Mac/Windows native; Linux via `host-gateway` in compose) |
-| Platforms | Release images: **linux/amd64** + **linux/arm64** (Intel/Apple Silicon Mac, Windows, Linux) |
 | Data | Postgres volume `kaban-postgres-data`; run `make migrate` after first start |
-### Production compose (`docker-compose.release.yml`)
-
-Uses pinned [GHCR](https://github.com/cha0skvlt/kaban.ai/pkgs/container/kaban.ai) images; UI is baked into the nginx image.
-
-```bash
-make start-release
-make stop-release
-```
 
 ---
 
-## Releases
+## Auto-start (daemon)
 
-Versioning follows [SemVer](https://semver.org/). Changelog: [CHANGELOG.md](CHANGELOG.md).
+`make install-daemon` registers **kaban.ai** to start after **boot** (Linux) or **login** (macOS). It waits for Docker, starts Ollama when configured, then runs `docker compose up -d`.
 
-| Topic | Instructions |
-|-------|----------------|
-| **Upgrade** | `docker compose -f docker-compose.release.yml pull && docker compose -f docker-compose.release.yml up -d` |
-| **Backup** | `make backup` (pg_dump). Restore: `gunzip -c backups/<file>.sql.gz \| psql "$DATABASE_URL"` |
-| **Security** | Change `KANBAN_API_KEY` from `dev-key` before exposing the host; set `localStorage.kanban_api_key` in the browser to match |
-| **GHCR access** | After the first release, set the package visibility to **Public** under GitHub → Packages → `kaban.ai` → Package settings |
-
-New releases: update [VERSION](VERSION), [CHANGELOG.md](CHANGELOG.md), and `docker-compose.release.yml` image tags, then:
+On macOS the background item appears as **kaban.ai** in Login Items (unsigned script — “unidentified developer” is normal without Apple code signing).
 
 ```bash
-git tag v1.1
-git push origin v1.1
+make install-daemon
 ```
 
-CI publishes images and attaches an updated `docker-compose.release.yml` to the GitHub Release.
+| OS | Mechanism | When it runs |
+|----|-----------|--------------|
+| **Linux** | systemd user unit `kaban.service` | After Docker starts |
+| **macOS** | LaunchAgent `ai.kaban.ai` | At user login |
+
+**Linux — start at boot without logging in:**
+
+```bash
+loginctl enable-linger "$USER"
+```
+
+**System-wide on Linux** (optional, requires sudo):
+
+```bash
+./scripts/install-daemon.sh --system
+```
+
+**Useful commands:**
+
+```bash
+make daemon-status
+make uninstall-daemon
+
+# Linux (user)
+systemctl --user status kaban
+systemctl --user restart kaban
+journalctl --user -u kaban -f
+
+# macOS
+launchctl print gui/$(id -u)/ai.kaban.ai
+launchctl kickstart -k gui/$(id -u)/ai.kaban.ai
+```
+
+Logs: `logs/kaban.ai.log` (and `logs/kaban.ai.out.log` on macOS).
 
 ---
 
@@ -335,7 +314,7 @@ make test-cov
 
 ## Design tokens (UI)
 
-Single palette in `frontend/kanban.html` (`:root` + two themes). Avoid one-off hex in components.
+Single palette in `frontend/css/tokens.css` (`:root` + two themes). Avoid one-off hex in components.
 
 | Token | Hex | Use |
 |-------|-----|-----|
@@ -363,18 +342,20 @@ Themes (`data-theme="dark"` / `light`) remap surfaces, text, shadows, and `color
 ## Project layout
 
 ```
-.github/workflows/      # CI + release (GHCR publish on tags)
-docker/Dockerfile.nginx # production UI image
+.github/workflows/      # CI
+docker/Dockerfile.nginx
 img/                    # logos, favicons, kaban.png, demo.png (README screenshot)
-frontend/kanban.html    # UI (single file)
+frontend/kanban.html    # UI shell (HTML + inline handlers)
+frontend/css/           # tokens, components, overlays, responsive
+frontend/js/            # ES modules (state, api, board UI, AI)
 backend/app.py          # FastAPI routes
 backend/agent.py        # LLM + validation + from-text logic
 backend/store.py        # Postgres persistence (psycopg3)
 backend/realtime.py     # LISTEN/NOTIFY → WebSocket hub
 backend/alembic/        # database migrations
+scripts/kaban.ai        # daemon entry (auto-start)
 test/                   # pytest suite
-docker-compose.yml      # local build + dev mounts
-docker-compose.release.yml  # pinned GHCR images
+docker-compose.yml
 CHANGELOG.md
 VERSION
 Makefile
