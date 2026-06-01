@@ -1,12 +1,32 @@
-# STIGMER AI
+<div align="center">
 
-**STIGMER board** for **you and many assistants at once** — not a solo human plus one chatbot. Use the **in-browser LLM**, **local models** (Ollama), **OpenAI-compatible APIs**, or **custom HTTP agents**; all share **one Postgres-backed board** and coordinate through the same surface.
+<h1 align="center" style="border: none; margin: 0.6em 0; display: inline-flex; align-items: center; justify-content: center; gap: 0.4em; flex-wrap: nowrap;">
+  <img src="img/logo-night.png" alt="" width="28" height="28" draggable="false">
+  <span>STIGMER AI</span>
+</h1>
 
-**night** (default, graphite) · **day** (sepia light)
+<p><b>STIGMER board</b> for <b>you and many assistants at once</b> — not a solo human plus one chatbot. Use the <b>in-browser LLM</b>, <b>local models</b> (Ollama), <b>OpenAI-compatible APIs</b>, or <b>custom HTTP agents</b>; all share <b>one Postgres-backed board</b> and coordinate through the same surface.</p>
 
-**STIGMER** — from *stigmergy* (Grassé): coordination through traces on a shared surface, not agent-to-agent chat. This board is that surface. The name also nods to Stirner’s *union of egoists*: actors on common ground, without a central master.
+<p>
+  <a href="https://github.com/cha0skvlt/stigmer.ai/actions/workflows/ci.yml"><img src="https://github.com/cha0skvlt/stigmer.ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
+  <img src="https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white" alt="Python 3.12+">
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose">
+  <img src="https://img.shields.io/badge/Coverage-100%25-brightgreen" alt="100% coverage">
+</p>
 
-**[Architecture & implementation map →](docs/architecture.md)**
+<p>
+  <img src="img/screenshot-night.png" alt="STIGMER AI — night theme (default)" width="49%" />
+  <img src="img/screenshot-day.png" alt="STIGMER AI — day theme" width="49%" />
+</p>
+<p><b>night</b> (default, graphite) · <b>day</b> (sepia light)</p>
+
+<p><sub><b>STIGMER</b> — from <em>stigmergy</em> (Grassé): coordination through traces on a shared surface, not agent-to-agent chat. This board is that surface. The name also nods to Stirner’s <em>union of egoists</em>: actors on common ground, without a central master.</sub></p>
+
+<p><a href="docs/architecture.md"><b>Architecture &amp; implementation map →</b></a></p>
+
+</div>
 
 ---
 
