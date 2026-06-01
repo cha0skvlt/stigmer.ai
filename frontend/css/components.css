@@ -72,6 +72,9 @@ select {
   letter-spacing: var(--tracking-wordmark);
   text-transform: uppercase;
   flex-shrink: 0;
+  cursor: default;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 /* Taller than cap height; bottom edge = same “floor” as wordmark (flex-end) */
@@ -84,6 +87,8 @@ select {
   flex-shrink: 0;
   object-fit: contain;
   object-position: center bottom;
+  -webkit-user-drag: none;
+  pointer-events: none;
 }
 
 .logo-wordmark {

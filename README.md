@@ -1,56 +1,38 @@
-<div align="center">
+# STIGMER AI
 
-<h1 align="center" style="border: none; margin: 0.6em 0; display: inline-flex; align-items: center; justify-content: center; gap: 0.4em; flex-wrap: nowrap;">
-  <img src="img/logo-night.png" alt="" width="28" height="28">
-  <span>STIGMER AI</span>
-</h1>
+**STIGMER board** for **you and many assistants at once** — not a solo human plus one chatbot. Use the **in-browser LLM**, **local models** (Ollama), **OpenAI-compatible APIs**, or **custom HTTP agents**; all share **one Postgres-backed board** and coordinate through the same surface.
 
-**STIGMER board + LLM assistant in the browser, with a Postgres-backed coordination layer for external agent swarms.**
+**night** (default, graphite) · **day** (sepia light)
 
-<p>
-  <a href="https://github.com/cha0skvlt/stigmer.ai/actions/workflows/ci.yml"><img src="https://github.com/cha0skvlt/stigmer.ai/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3"></a>
-  <img src="https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white" alt="Python 3.12+">
-  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose">
-  <img src="https://img.shields.io/badge/Coverage-100%25-brightgreen" alt="100% coverage">
-</p>
+**STIGMER** — from *stigmergy* (Grassé): coordination through traces on a shared surface, not agent-to-agent chat. This board is that surface. The name also nods to Stirner’s *union of egoists*: actors on common ground, without a central master.
 
-<p>
-  <img src="img/screenshot-night.png" alt="STIGMER AI — night theme (default)" width="49%" />
-  <img src="img/screenshot-day.png" alt="STIGMER AI — day theme" width="49%" />
-</p>
-<p><b>night</b> (default, graphite) · <b>day</b> (sepia light)</p>
-
-<p><sub><b>STIGMER</b> — from <em>stigmergy</em> (Grassé): coordination through traces on a shared surface, not agent-to-agent chat. This board is that surface. The name also nods to Stirner’s <em>union of egoists</em>: actors on common ground, without a central master.</sub></p>
-
-<p><a href="architecture.md"><b>Architecture &amp; implementation map →</b></a></p>
-
-</div>
+**[Architecture & implementation map →](docs/architecture.md)**
 
 ---
 
 ## What it does
 
-STIGMER AI is a **six-column task board** for one human workflow: paste messy text → structured card; drag cards; pin, label, and theme the board; ask the built-in LLM without leaving the page. Data lives in **PostgreSQL**; the UI is a single HTML shell and ES modules — no frontend build.
+STIGMER AI is a **six-column task board** where **you and many assistants** work in parallel on the same state: paste messy text → structured card; drag, pin, and label in the browser; ask the built-in LLM without leaving the page — while **other agents** (different keys, models, hosts) claim tasks and edit cards over HTTP. **PostgreSQL** is the single source of truth; the UI is one HTML shell and ES modules — no frontend build.
 
-A second layer lets **external agents** coordinate on the same board via leases and versioned edits (stigmergy API). The browser product and the swarm API share the database but use different auth paths — see [architecture.md § Two coordination layers](architecture.md#two-coordination-layers).
+Coordination is **stigmergy**, not agent-to-agent chat: leases, heartbeats, and versioned edits on shared cards. Browser UI and swarm API use different auth but the same database — see [docs/architecture.md § Two coordination layers](docs/architecture.md#two-coordination-layers).
 
 ---
 
 ## Features
 
-| Feature | In short | Where it lives |
-|---------|----------|----------------|
-| **Board** | Columns, cards, labels, drag-and-drop, lock layout | [`frontend/js/cards.js`](frontend/js/cards.js) · [`columns.js`](frontend/js/columns.js) · [`backend/store.py`](backend/store.py) |
-| **From text** | Paste → one card (title, column, labels, description) | [`backend/agent.py`](backend/agent.py) · [`frontend/js/ai.js`](frontend/js/ai.js) |
-| **Ask AI** | Summaries and Q&A; mutations only via explicit actions | [`frontend/js/ai.js`](frontend/js/ai.js) · [`backend/agent.py`](backend/agent.py) |
-| **Realtime** | Multi-tab / multi-client sync over WebSocket | [`backend/realtime.py`](backend/realtime.py) · [`frontend/js/realtime.js`](frontend/js/realtime.js) |
-| **Themes** | Night (default) and day (sepia) | [`frontend/css/tokens.css`](frontend/css/tokens.css) · [`frontend/js/ui.js`](frontend/js/ui.js) |
-| **Swarm tasks** | Claim, heartbeat, complete, release; per-agent keys | [`backend/store.py`](backend/store.py) · [`docs/AGENTS.md`](docs/AGENTS.md) |
-| **Agent credentials** | `make agent-add` / `list` / `revoke` | [`scripts/agents_cli.py`](scripts/agents_cli.py) · [`backend/agent_registry.py`](backend/agent_registry.py) |
 
-Stack, schema, HTTP routes, env vars, and module map: **[architecture.md](architecture.md)**.
+| Feature               | In short                                               | Where it lives                                                                                                                   |
+| --------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| **Board**             | Columns, cards, labels, drag-and-drop, lock layout     | `[frontend/js/cards.js](frontend/js/cards.js)` · `[columns.js](frontend/js/columns.js)` · `[backend/store.py](backend/store.py)` |
+| **From text**         | Paste → one card (title, column, labels, description)  | `[backend/agent.py](backend/agent.py)` · `[frontend/js/ai.js](frontend/js/ai.js)`                                                |
+| **Ask AI**            | Summaries and Q&A; mutations only via explicit actions | `[frontend/js/ai.js](frontend/js/ai.js)` · `[backend/agent.py](backend/agent.py)`                                                |
+| **Realtime**          | Multi-tab / multi-client sync over WebSocket           | `[backend/realtime.py](backend/realtime.py)` · `[frontend/js/realtime.js](frontend/js/realtime.js)`                              |
+| **Themes**            | Night (default) and day (sepia)                        | `[frontend/css/tokens.css](frontend/css/tokens.css)` · `[frontend/js/ui.js](frontend/js/ui.js)`                                  |
+| **Swarm tasks**       | Claim, heartbeat, complete, release; per-agent keys    | `[backend/store.py](backend/store.py)` · `[docs/AGENTS.md](docs/AGENTS.md)`                                                      |
+| **Agent credentials** | `make agent-add` / `list` / `revoke`                   | `[scripts/agents_cli.py](scripts/agents_cli.py)` · `[backend/agent_registry.py](backend/agent_registry.py)`                      |
+
+
+Stack, schema, HTTP routes, env vars, and module map: **[docs/architecture.md](docs/architecture.md)**.
 
 ---
 
@@ -76,21 +58,23 @@ localStorage.setItem('stigmer_api_key', 'your-key')
 
 **Auto-start at login:** `make install` · **Stop / restart:** `make stop` · `make restart` · **Status:** `make status`
 
-Details: [architecture.md § Docker & daemon](architecture.md#docker--daemon).
+Details: [docs/architecture.md § Docker & daemon](docs/architecture.md#docker--daemon).
 
 ---
 
 ## Operations
 
-| Command | Purpose |
-|---------|---------|
-| `make start` | Start stack ([`scripts/stigmer`](scripts/stigmer)) |
-| `make stop` / `restart` / `status` | Stack control |
-| `make install` / `uninstall` | Login/boot daemon (launchd / systemd) |
-| `make backup` | `pg_dump` → `./backup/` |
-| `make reset-db` | Wipe volume + fresh board |
-| `make test-cov` | 202 tests, 100% backend coverage |
-| `make agent-add ID=… NAME=…` | Register swarm agent key |
+
+| Command                            | Purpose                                            |
+| ---------------------------------- | -------------------------------------------------- |
+| `make start`                       | Start stack (`[scripts/stigmer](scripts/stigmer)`) |
+| `make stop` / `restart` / `status` | Stack control                                      |
+| `make install` / `uninstall`       | Login/boot daemon (launchd / systemd)              |
+| `make backup`                      | `pg_dump` → `./backup/`                            |
+| `make reset-db`                    | Wipe volume + fresh board                          |
+| `make test-cov`                    | 202 tests, 100% backend coverage                   |
+| `make agent-add ID=… NAME=…`       | Register swarm agent key                           |
+
 
 ---
 
@@ -100,7 +84,7 @@ Interchangeable agents work the board through HTTP only (no agent-to-agent chann
 
 - **[docs/AGENTS.md](docs/AGENTS.md)** — loop, 409 errors, examples  
 - **[backend/agent_tools.json](backend/agent_tools.json)** — `GET /api/agent/tools`  
-- **[architecture.md § Stigmergy](architecture.md#stigmergy-task-api)**
+- **[docs/architecture.md § Stigmergy](docs/architecture.md#stigmergy-task-api)**
 
 ```bash
 make agent-add ID=my-agent NAME="My Agent"   # key printed once
@@ -112,18 +96,20 @@ make agent-revoke ID=my-agent
 
 ## Design
 
-Industrial monochrome UI: colour on label pills, flame/urgent signal, and accent only. Tokens: [`frontend/css/tokens.css`](frontend/css/tokens.css). Icons: [`frontend/js/icons.js`](frontend/js/icons.js).
+Industrial monochrome UI: colour on label pills, flame/urgent signal, and accent only. Tokens: `[frontend/css/tokens.css](frontend/css/tokens.css)`. Icons: `[frontend/js/icons.js](frontend/js/icons.js)`.
 
 ---
 
 ## Documentation
 
-| Doc | Contents |
-|-----|----------|
-| [architecture.md](architecture.md) | Stack, DB, auth, API table, modules, realtime, limits |
-| [docs/AGENTS.md](docs/AGENTS.md) | Swarm agent contract |
-| [CHANGELOG.md](CHANGELOG.md) | Releases |
-| [.env.example](.env.example) | Configuration template |
+
+| Doc                                | Contents                                              |
+| ---------------------------------- | ----------------------------------------------------- |
+| [docs/architecture.md](docs/architecture.md) | Stack, DB, auth, API table, modules, realtime, limits |
+| [docs/AGENTS.md](docs/AGENTS.md)   | Swarm agent contract                                  |
+| [CHANGELOG.md](CHANGELOG.md)       | Releases                                              |
+| [.env.example](.env.example)       | Configuration template                                |
+
 
 ---
 

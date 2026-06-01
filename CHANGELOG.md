@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- [architecture.md](architecture.md) — technical reference (stack, schema, API, modules).
+- [docs/architecture.md](docs/architecture.md) — technical reference (stack, schema, API, modules).
 - Brand logos `img/logo-night.png` / `img/logo-day.png`; theme-aware favicons (`favicon-16/32`).
 
 ### Changed
