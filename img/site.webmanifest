@@ -1,19 +1,19 @@
 {
   "name": "STIGMER AI",
-  "short_name": "STIGMER AI",
+  "short_name": "STIGMER",
   "icons": [
     {
-      "src": "/img/android-chrome-192x192.png",
-      "sizes": "192x192",
+      "src": "/img/logo-night.png",
+      "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "/img/android-chrome-512x512.png",
+      "src": "/img/logo-day.png",
       "sizes": "512x512",
       "type": "image/png"
     }
   ],
-  "theme_color": "#111014",
-  "background_color": "#0a090c",
+  "theme_color": "#0b0c0e",
+  "background_color": "#0b0c0e",
   "display": "standalone"
 }

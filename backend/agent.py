@@ -93,8 +93,8 @@ raw_text: "need to urgently fix 500 on prod when we deploy crate-core, logs in s
 raw_text: "idea: article about local LLM on Apple Silicon"
 {"actions":[{"type":"add_task","title":"Write Apple Silicon local LLM article","target_column":"ideas","labels":["purple","blue"],"desc":"Article idea about running local LLMs on Apple Silicon"}],"message":"Task added to Ideas"}
 
-raw_text: "build kanban docker stack with nginx and compose"
-{"actions":[{"type":"add_task","title":"Build Kanban Docker stack","target_column":"production","labels":["purple"],"desc":"Docker Compose stack with nginx"}],"message":"Task added to Production"}"""
+raw_text: "build stigmer docker stack with nginx and compose"
+{"actions":[{"type":"add_task","title":"Build STIGMER Docker stack","target_column":"production","labels":["purple"],"desc":"Docker Compose stack with nginx"}],"message":"Task added to Production"}"""
 
 STRICT_PROMPT = (
     SYSTEM_PROMPT

@@ -20,20 +20,34 @@
 <head>
 <script>
 (function () {
+  var light = false;
   try {
-    if (localStorage.getItem('stigmer-theme') === 'light') {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
+    light = localStorage.getItem('stigmer-theme') === 'light';
+    if (light) document.documentElement.setAttribute('data-theme', 'light');
   } catch (e) {}
+  var favicon = document.createElement('link');
+  favicon.rel = 'icon';
+  favicon.id = 'stigmer-favicon';
+  favicon.type = 'image/png';
+  favicon.sizes = '32x32';
+  favicon.href = light ? '/img/favicon-32-day.png' : '/img/favicon-32.png';
+  document.head.appendChild(favicon);
+  var favicon16 = document.createElement('link');
+  favicon16.rel = 'icon';
+  favicon16.type = 'image/png';
+  favicon16.sizes = '16x16';
+  favicon16.id = 'stigmer-favicon-16';
+  favicon16.href = light ? '/img/favicon-16-day.png' : '/img/favicon-16.png';
+  document.head.appendChild(favicon16);
+  var touch = document.createElement('link');
+  touch.rel = 'apple-touch-icon';
+  touch.href = '/img/logo-day.png';
+  document.head.appendChild(touch);
 })();
 </script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>STIGMER AI</title>
-<link rel="icon" href="/img/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
-<link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
 <link rel="manifest" href="/img/site.webmanifest">
 <meta name="theme-color" content="#0b0c0e">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -49,8 +63,11 @@
 <!-- HEADER -->
 <header class="header">
   <div class="logo" aria-label="STIGMER AI">
-    <span class="logo-stigmer">STIGMER</span>
-    <span class="logo-ai">AI</span>
+    <img class="logo-mark" id="logo-mark" src="/img/logo-night.png" width="26" height="26" alt="">
+    <span class="logo-wordmark">
+      <span class="logo-stigmer">STIGMER</span>
+      <span class="logo-ai">AI</span>
+    </span>
   </div>
   <div class="header-actions">
   <div class="header-tools">

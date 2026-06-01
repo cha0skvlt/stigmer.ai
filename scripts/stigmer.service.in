@@ -1,5 +1,5 @@
 [Unit]
-Description=stigmer.ai — STIGMER AI Kanban board (Docker Compose)
+Description=stigmer.ai — STIGMER AI board (Docker Compose)
 Documentation=https://github.com/cha0skvlt/stigmer.ai
 After=docker.service
 Wants=docker.service

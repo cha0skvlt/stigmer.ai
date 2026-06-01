@@ -5,6 +5,26 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3] - 2026-06-01
+
+### Added
+
+- [architecture.md](architecture.md) — technical reference (stack, schema, API, modules).
+- Brand logos `img/logo-night.png` / `img/logo-day.png`; theme-aware favicons (`favicon-16/32`).
+
+### Changed
+
+- README trimmed for product overview; links to architecture and code paths.
+- UI shell renamed `frontend/stigmer.html`; Compose project `stigmer`.
+- **Makefile:** single runtime path via `scripts/stigmer` (`start` / `stop` / `restart`); `make install` / `uninstall` for daemon; removed `scripts/start.sh`.
+- Header logo mark + baseline alignment; favicon swaps with theme.
+
+### Removed
+
+- Legacy favicon kit and `demo.png`; board screenshots renamed to `screenshot-night.png` / `screenshot-day.png`.
+
+[1.3]: https://github.com/cha0skvlt/stigmer.ai/releases/tag/v1.3
+
 ## [1.2] - 2026-06-01
 
 ### Changed
@@ -67,9 +87,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Personal Kanban board with LLM agent (From text, Ask AI)
+- Personal STIGMER board with LLM agent (From text, Ask AI)
 - FastAPI backend with JSON persistence and OpenAI-compatible providers (Ollama, OpenAI, OpenRouter, Groq)
-- Single-page UI (`frontend/kanban.html`) — themes, column lock/reorder, label management
+- Single-page UI (`frontend/stigmer.html`) — themes, column lock/reorder, label management
 - Docker Compose stack: Nginx on `:8080` + Python backend
 - Pre-built images on GHCR (`ghcr.io/cha0skvlt/stigmer.ai`) and `docker-compose.release.yml` for production installs
 - GitHub Actions: CI (lint + 100% coverage tests) and release workflow on version tags

@@ -7,7 +7,7 @@ cd "$ROOT"
 
 LOG_DIR="${STIGMER_LOG_DIR:-$ROOT/logs}"
 LOG_FILE="${STIGMER_LOG_FILE:-$LOG_DIR/stigmer.log}"
-COMPOSE=(docker compose -f docker-compose.yml)
+COMPOSE=(docker compose -p stigmer -f docker-compose.yml)
 
 mkdir -p "$LOG_DIR"
 
@@ -21,8 +21,8 @@ log() {
 
 load_env() {
   if [[ ! -f .env ]]; then
-    log "ERROR: .env not found in $ROOT — run: cp .env.example .env"
-    exit 1
+    log "Creating .env from .env.example"
+    cp .env.example .env
   fi
   set -a
   # shellcheck disable=SC1091
@@ -41,6 +41,29 @@ wait_for_url() {
   done
   log "ERROR: $label did not become ready ($url)"
   return 1
+}
+
+wait_for_stigmer_health() {
+  local tries="${1:-120}" body
+  for ((i = 1; i <= tries; i++)); do
+    body="$(curl -sf http://localhost:8080/api/health 2>/dev/null || true)"
+    if [[ "$body" == *'"ok":true'* ]] || [[ "$body" == *'"ok": true'* ]]; then
+      log "stigmer.ai health OK"
+      return 0
+    fi
+    sleep 1
+  done
+  log "ERROR: STIGMER AI not healthy on :8080 (got: ${body:-no response})"
+  log "Hint: another app may be using port 8080 — stop it or run: lsof -i :8080"
+  return 1
+}
+
+warn_port_8080_conflict() {
+  local owner
+  owner="$(lsof -nP -iTCP:8080 -sTCP:LISTEN 2>/dev/null | awk 'NR==2{print $1, $2}')"
+  if [[ -n "$owner" && "$owner" != *docker* && "$owner" != *com.docke* ]]; then
+    log "WARN: port 8080 already in use: $owner (not Docker — STIGMER may not bind)"
+  fi
 }
 
 wait_for_docker() {
@@ -101,13 +124,14 @@ cmd_start() {
   else
     log "Mode: external AI API"
   fi
+  warn_port_8080_conflict
   log "Starting stigmer.ai stack..."
-  if [[ "${STIGMER_DAEMON_BUILD:-}" == "1" ]]; then
+  if [[ "${STIGMER_DAEMON_BUILD:-1}" == "1" ]]; then
     "${COMPOSE[@]}" up --build -d >>"$LOG_FILE" 2>&1
   else
     "${COMPOSE[@]}" up -d >>"$LOG_FILE" 2>&1
   fi
-  wait_for_url "http://localhost:8080/api/health" "stigmer.ai" 120
+  wait_for_stigmer_health 120
   log "stigmer.ai running — http://localhost:8080"
 }
 
@@ -142,7 +166,7 @@ Usage: stigmer {start|stop|restart|status}
   status   compose ps + health check
 
 Environment:
-  STIGMER_DAEMON_BUILD=1  run 'compose up --build' on start
+  STIGMER_DAEMON_BUILD=0  skip image rebuild on start (default: rebuild)
   STIGMER_LOG_FILE        default: $ROOT/logs/stigmer.log
 EOF
 }

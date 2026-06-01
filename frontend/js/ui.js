@@ -41,6 +41,16 @@ function updateThemeIcon(theme) {
   }
 }
 
+function updateBrandAssets(theme) {
+  const light = theme === 'light';
+  const mark = document.getElementById('logo-mark');
+  if (mark) mark.src = light ? '/img/logo-day.png' : '/img/logo-night.png';
+  const favicon = document.getElementById('stigmer-favicon');
+  if (favicon) favicon.href = light ? '/img/favicon-32-day.png' : '/img/favicon-32.png';
+  const favicon16 = document.getElementById('stigmer-favicon-16');
+  if (favicon16) favicon16.href = light ? '/img/favicon-16-day.png' : '/img/favicon-16.png';
+}
+
 export function applyTheme(theme) {
   const next = theme === 'light' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
@@ -51,6 +61,7 @@ export function applyTheme(theme) {
   }
   updateThemeMeta();
   updateThemeIcon(next);
+  updateBrandAssets(next);
 }
 
 export function initTheme() {

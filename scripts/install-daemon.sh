@@ -25,7 +25,7 @@ After install:
                  loginctl enable-linger "\$USER"
   macOS:         launchctl print gui/\$(id -u)/$LABEL
 
-Remove: make uninstall-daemon
+Remove: make uninstall
 EOF
 }
 
