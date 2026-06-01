@@ -37,7 +37,7 @@ jobs:
             test/requirements.txt
 
       - name: Install dependencies
-        run: make install
+        run: make deps
 
       - name: Lint
         run: make lint
