@@ -1,0 +1,16 @@
+[Unit]
+Description=stigmer.ai — STIGMER AI Kanban board (Docker Compose)
+Documentation=https://github.com/cha0skvlt/stigmer.ai
+After=docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=@STIGMER_ROOT@
+Environment=STIGMER_DAEMON_QUIET=1
+ExecStart=@STIGMER_ROOT@/scripts/stigmer start
+ExecStop=@STIGMER_ROOT@/scripts/stigmer stop
+
+[Install]
+WantedBy=default.target

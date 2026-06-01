@@ -1,4 +1,4 @@
-# KABAN AI
+# STIGMER AI
 # Copyright (C) 2026 Eugene Tomashkov
 #
 # This program is free software: you can redistribute it and/or modify
@@ -46,8 +46,83 @@ def test_board_requires_api_key(client):
     assert response.status_code == 401
 
 
+def test_board_rejects_wrong_api_key(client):
+    response = client.get("/api/board", headers={"X-API-Key": "wrong-key"})
+    assert response.status_code == 401
+
+
+def test_task_claim_unknown_card_returns_404(client):
+    response = client.post(
+        "/api/tasks/missing-card-id/claim",
+        headers=auth_headers(),
+        json={},
+    )
+    assert response.status_code == 404
+
+
+def test_map_task_exception_generic_bad_request():
+    from task_api import map_task_exception
+
+    exc = map_task_exception(ValueError("unexpected task failure"))
+    assert exc.status_code == 400
+    assert exc.detail == "unexpected task failure"
+
+
+def test_task_routes_require_valid_human_or_agent_key(client):
+    wrong = client.post(
+        "/api/tasks/missing/claim",
+        headers={"X-API-Key": "wrong-key"},
+        json={},
+    )
+    assert wrong.status_code == 401
+
+
+def test_task_routes_missing_api_key_config(monkeypatch):
+    monkeypatch.delenv("STIGMER_API_KEY", raising=False)
+    import app as app_module
+
+    importlib.reload(app_module)
+    missing_cfg = TestClient(app_module.app).post(
+        "/api/tasks/missing/claim",
+        headers={"X-API-Key": "anything"},
+        json={},
+    )
+    assert missing_cfg.status_code == 500
+
+
+def test_task_release_and_complete_conflict(client):
+    from test_agents import agent_headers, human_headers, register_agent
+
+    key = register_agent("blocker")
+    card = client.post(
+        "/api/cards",
+        json={"column_id": "todo", "title": "Blocked", "labels": []},
+        headers=human_headers(),
+    ).json()
+    client.post(
+        f"/api/tasks/{card['id']}/claim",
+        headers=agent_headers(key),
+        json={},
+    )
+    release_conflict = client.post(
+        f"/api/tasks/{card['id']}/release",
+        headers=human_headers(),
+        json={},
+    )
+    assert release_conflict.status_code == 409
+    assert release_conflict.json()["detail"]["error"] == "not_holder"
+
+    complete_conflict = client.post(
+        f"/api/tasks/{card['id']}/complete",
+        headers=human_headers(),
+        json={},
+    )
+    assert complete_conflict.status_code == 409
+    assert complete_conflict.json()["detail"]["error"] == "not_holder"
+
+
 def test_board_missing_configured_key(monkeypatch):
-    monkeypatch.delenv("KANBAN_API_KEY", raising=False)
+    monkeypatch.delenv("STIGMER_API_KEY", raising=False)
     import app
 
     importlib.reload(app)
@@ -60,7 +135,7 @@ def test_board_get_empty_includes_starter(client):
     assert loaded.status_code == 200
     data = loaded.json()
     assert len(data["cards"]) == 1
-    assert data["cards"][0]["id"] == "kaban-starter"
+    assert data["cards"][0]["id"] == "stigmer-starter"
     assert data["cards"][0]["col"] == "ideas"
 
 
@@ -101,7 +176,7 @@ def test_cards_crud_and_column_mutations(client):
         json={"column_id": "todo", "title": "X", "desc": "d", "labels": ["red"], "pinned": True},
         headers=auth_headers(),
     )
-    assert created.status_code == 200
+    assert created.status_code == 201
     card = created.json()
     assert card["title"] == "X"
     assert card["col"] == "todo"
@@ -184,7 +259,7 @@ def test_cards_invalid_requests_return_400(client):
         json={"title": "X"},
         headers=auth_headers(),
     )
-    assert bad_patch.status_code == 400
+    assert bad_patch.status_code == 404
 
     bad_move = client.post(
         "/api/cards/nope/move",
@@ -350,6 +425,6 @@ def test_dotenv_import_error_branch(monkeypatch):
     sys.modules.pop("app", None)
     import app as reloaded_app
 
-    assert reloaded_app.app.title == "KABAN AI API"
+    assert reloaded_app.app.title == "STIGMER AI API"
     importlib.reload(sys.modules["store"])
     importlib.reload(sys.modules["app"])

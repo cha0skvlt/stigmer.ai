@@ -1,4 +1,4 @@
-# KABAN AI
+# STIGMER AI
 # Copyright (C) 2026 Eugene Tomashkov
 #
 # This program is free software: you can redistribute it and/or modify
@@ -783,7 +783,7 @@ def test_finalize_from_text_falls_back_without_add_task():
         "cards": [],
     }
     parsed = {"actions": [], "message": ""}
-    result = agent._finalize_from_text(parsed, "idea about kaban", board)
+    result = agent._finalize_from_text(parsed, "idea about stigmergy", board)
     assert result["actions"][0]["title"]
 
 

@@ -1,0 +1,130 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "list_available_tasks",
+      "description": "Returns only tasks that are free to claim right now (unclaimed or expired lease). Optional filters by column slug or label slug.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "column": {
+            "type": "string",
+            "description": "Column slug filter (e.g. todo, inprogress)."
+          },
+          "label": {
+            "type": "string",
+            "description": "Label slug filter; task must have this label."
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "claim_task",
+      "description": "Claim a task by id. If already_claimed, do NOT retry the same task — pick a different one from list_available_tasks.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "Card id from list_available_tasks."
+          }
+        },
+        "required": ["task_id"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "heartbeat_task",
+      "description": "Renew the lease on a claimed task. Call periodically during long work. If lease_lost, STOP — another agent owns it now.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "Card id you hold."
+          }
+        },
+        "required": ["task_id"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "complete_task",
+      "description": "Marks the task done and releases the lease. Optionally leave a short trace describing what was done.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "Card id you hold."
+          },
+          "result_note": {
+            "type": "string",
+            "description": "Optional completion note appended to the card."
+          }
+        },
+        "required": ["task_id"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "release_task",
+      "description": "Give the task back unfinished so another agent can take it.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "Card id you hold."
+          }
+        },
+        "required": ["task_id"],
+        "additionalProperties": false
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "post_trace",
+      "description": "Leave a new task/marker on the board for any agent (including yourself) to pick up later.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Short title for the new card."
+          },
+          "column": {
+            "type": "string",
+            "description": "Column slug (default todo)."
+          },
+          "labels": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Label slugs to attach."
+          },
+          "desc": {
+            "type": "string",
+            "description": "Longer description / trace body."
+          }
+        },
+        "required": ["title"],
+        "additionalProperties": false
+      }
+    }
+  }
+]

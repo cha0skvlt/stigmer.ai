@@ -1,4 +1,4 @@
-.PHONY: help setup install env start stop restart install-daemon uninstall-daemon daemon-status logs ps health test test-cov lint format dev clean migrate migrate-down-one backup
+.PHONY: help setup install env start stop restart install-daemon uninstall-daemon daemon-status logs ps health test test-cov lint format dev clean migrate migrate-down-one backup reset-db agent-add agent-list agent-revoke
 
 PYTHON ?= python3
 PIP := $(PYTHON) -m pip
@@ -11,12 +11,12 @@ ALEMBIC := $(PYTHON) -m alembic
 COMPOSE ?= docker compose
 
 help:
-	@echo "KABAN AI — make targets"
+	@echo "STIGMER AI — make targets"
 	@echo ""
 	@echo "  make start            Ollama/API checks + Docker stack (detached)"
 	@echo "  make stop             Stop Docker stack"
 	@echo "  make restart          Rebuild and restart Docker stack"
-	@echo "  make install-daemon   Auto-start kaban.ai at boot/login"
+	@echo "  make install-daemon   Auto-start stigmer.ai at boot/login"
 	@echo "  make uninstall-daemon Remove auto-start service"
 	@echo "  make daemon-status    Stack health + compose ps"
 	@echo "  make setup            Install Python deps + create .env"
@@ -32,6 +32,10 @@ help:
 	@echo "  make migrate          Run Alembic migrations"
 	@echo "  make migrate-down-one Downgrade one migration"
 	@echo "  make backup           Dump Postgres database to ./backup/"
+	@echo "  make reset-db         Stop stack and remove Postgres volume (fresh board)"
+	@echo "  make agent-add        Register swarm agent (ID=... NAME=...)"
+	@echo "  make agent-list       List registered agents"
+	@echo "  make agent-revoke     Revoke agent key (ID=...)"
 
 setup: install env
 
@@ -53,7 +57,7 @@ restart: stop
 	@echo "Stack restarted. UI: http://localhost:8080"
 
 install-daemon: env
-	@chmod +x scripts/kaban.ai scripts/install-daemon.sh scripts/uninstall-daemon.sh
+	@chmod +x scripts/stigmer scripts/install-daemon.sh scripts/uninstall-daemon.sh
 	@./scripts/install-daemon.sh
 
 uninstall-daemon:
@@ -61,8 +65,8 @@ uninstall-daemon:
 	@./scripts/uninstall-daemon.sh
 
 daemon-status:
-	@chmod +x scripts/kaban.ai
-	@./scripts/kaban.ai status
+	@chmod +x scripts/stigmer
+	@./scripts/stigmer status
 
 logs:
 	$(COMPOSE) logs -f
@@ -82,6 +86,7 @@ test-cov: install
 lint: install
 	$(RUFF) check backend test
 	$(BLACK) --check backend test
+	@test ! rg -q '#[0-9a-fA-F]{3,8}' frontend/css/components.css frontend/css/overlays.css frontend/css/responsive.css 2>/dev/null; echo "UI: no raw hex outside tokens.css"
 
 format: install
 	$(BLACK) backend test
@@ -99,7 +104,23 @@ migrate-down-one: env install
 backup: env
 	@mkdir -p backup
 	@echo "Dumping Postgres database to ./backup/ ..."
-	@$(COMPOSE) exec -T postgres pg_dump -U kaban -d kaban | gzip > backup/kaban_$$(date +%Y%m%d_%H%M%S).sql.gz
+	@$(COMPOSE) exec -T postgres pg_dump -U stigmer -d stigmer | gzip > backup/stigmer_$$(date +%Y%m%d_%H%M%S).sql.gz
+
+reset-db: stop
+	@echo "Removing Postgres volume (all board data)..."
+	@$(COMPOSE) down -v
+	@echo "Done. Run: make migrate && make start"
+
+agent-add: env install
+	@test -n "$(ID)" && test -n "$(NAME)" || (echo "Usage: make agent-add ID=my-agent NAME='My Agent'" && exit 1)
+	@$(PYTHON) scripts/agents_cli.py add --id "$(ID)" --name "$(NAME)"
+
+agent-list: env install
+	@$(PYTHON) scripts/agents_cli.py list
+
+agent-revoke: env install
+	@test -n "$(ID)" || (echo "Usage: make agent-revoke ID=my-agent" && exit 1)
+	@$(PYTHON) scripts/agents_cli.py revoke --id "$(ID)"
 
 clean:
 	rm -rf .pytest_cache

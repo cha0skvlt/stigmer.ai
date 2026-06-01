@@ -89,7 +89,7 @@ ensure_ollama() {
   warn "Ollama is not responding"
   if command -v ollama >/dev/null 2>&1; then
     log "Starting ollama serve..."
-    nohup ollama serve >/tmp/kanban-ollama.log 2>&1 &
+    nohup ollama serve >/tmp/stigmer-ollama.log 2>&1 &
   elif [[ "$(uname -s)" == "Darwin" && -d /Applications/Ollama.app ]]; then
     log "Starting Ollama app..."
     open -a Ollama
@@ -145,13 +145,13 @@ verify_external_api() {
 start_stack() {
   log "Building and starting Docker stack..."
   docker compose up --build -d
-  wait_for "http://localhost:8080/api/health" "KABAN AI stack" 90
+  wait_for "http://localhost:8080/api/health" "STIGMER AI stack" 90
 }
 
 print_summary() {
   cat <<EOF
 
-KABAN AI is running.
+STIGMER AI is running.
 
   UI:      http://localhost:8080
   Health:  http://localhost:8080/api/health

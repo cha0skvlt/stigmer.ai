@@ -56,3 +56,8 @@ certbot-webroot/
 # Local agent instructions (not shared)
 AGENT.md
 ROADMAP.md
+
+# npm (local tooling only)
+node_modules/
+package-lock.json
+package.json

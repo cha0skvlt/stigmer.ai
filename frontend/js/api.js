@@ -1,7 +1,7 @@
 import { state } from './state.js';
 import { clearUndoStack } from './undo.js';
 
-export const API_KEY = localStorage.getItem('kanban_api_key') || 'dev-key';
+export const API_KEY = localStorage.getItem('stigmer_api_key') || 'dev-key';
 
 export function boardPayload() {
   return { columns: state.columns, cards: state.cards, labels: state.labels };

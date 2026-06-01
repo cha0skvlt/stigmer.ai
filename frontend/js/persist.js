@@ -3,10 +3,10 @@ import { sortCardsForColumn } from './helpers.js';
 import { apiFetch } from './api.js';
 
 export const STARTER_CARD = {
-  id: 'kaban-starter',
+  id: 'stigmer-starter',
   col: 'ideas',
   title: [
-    'Welcome to KABAN AI',
+    'Welcome to STIGMER AI',
     'Try "From text" — paste a note, get a task',
     'Use AI chat to move cards or summarize',
     'Drag cards across columns as work progresses',

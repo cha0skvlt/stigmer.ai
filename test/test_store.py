@@ -1,4 +1,4 @@
-# KABAN AI
+# STIGMER AI
 # Copyright (C) 2026 Eugene Tomashkov
 #
 # This program is free software: you can redistribute it and/or modify

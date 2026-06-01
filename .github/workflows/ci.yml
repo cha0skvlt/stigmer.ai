@@ -13,18 +13,18 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: kaban_test
-          POSTGRES_USER: kaban
-          POSTGRES_PASSWORD: kaban
+          POSTGRES_DB: stigmer_test
+          POSTGRES_USER: stigmer
+          POSTGRES_PASSWORD: stigmer
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U kaban -d kaban_test"
+          --health-cmd="pg_isready -U stigmer -d stigmer_test"
           --health-interval=2s
           --health-timeout=2s
           --health-retries=30
     env:
-      DATABASE_URL: postgresql://kaban:kaban@localhost:5432/kaban_test
+      DATABASE_URL: postgresql://stigmer:stigmer@localhost:5432/stigmer_test
     steps:
       - uses: actions/checkout@v4
 

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# kaban.ai — start/stop KABAN Docker stack (systemd / launchd / manual).
+# stigmer.ai — start/stop STIGMER AI Docker stack (systemd / launchd / manual).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-LOG_DIR="${KABAN_LOG_DIR:-$ROOT/logs}"
-LOG_FILE="${KABAN_LOG_FILE:-$LOG_DIR/kaban.ai.log}"
+LOG_DIR="${STIGMER_LOG_DIR:-$ROOT/logs}"
+LOG_FILE="${STIGMER_LOG_FILE:-$LOG_DIR/stigmer.log}"
 COMPOSE=(docker compose -f docker-compose.yml)
 
 mkdir -p "$LOG_DIR"
@@ -14,7 +14,7 @@ mkdir -p "$LOG_DIR"
 log() {
   local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
   printf '%s\n' "$msg" >>"$LOG_FILE"
-  if [[ "${KABAN_DAEMON_QUIET:-}" != "1" ]]; then
+  if [[ "${STIGMER_DAEMON_QUIET:-}" != "1" ]]; then
     printf '%s\n' "$msg"
   fi
 }
@@ -101,20 +101,20 @@ cmd_start() {
   else
     log "Mode: external AI API"
   fi
-  log "Starting kaban.ai stack..."
-  if [[ "${KABAN_DAEMON_BUILD:-}" == "1" ]]; then
+  log "Starting stigmer.ai stack..."
+  if [[ "${STIGMER_DAEMON_BUILD:-}" == "1" ]]; then
     "${COMPOSE[@]}" up --build -d >>"$LOG_FILE" 2>&1
   else
     "${COMPOSE[@]}" up -d >>"$LOG_FILE" 2>&1
   fi
-  wait_for_url "http://localhost:8080/api/health" "kaban.ai" 120
-  log "kaban.ai running — http://localhost:8080"
+  wait_for_url "http://localhost:8080/api/health" "stigmer.ai" 120
+  log "stigmer.ai running — http://localhost:8080"
 }
 
 cmd_stop() {
-  log "Stopping kaban.ai stack..."
+  log "Stopping stigmer.ai stack..."
   "${COMPOSE[@]}" down >>"$LOG_FILE" 2>&1 || true
-  log "kaban.ai stopped"
+  log "stigmer.ai stopped"
 }
 
 cmd_status() {
@@ -134,7 +134,7 @@ cmd_restart() {
 
 usage() {
   cat <<EOF
-Usage: kaban.ai {start|stop|restart|status}
+Usage: stigmer {start|stop|restart|status}
 
   start    Wait for Docker, start stack (detached)
   stop     docker compose down
@@ -142,8 +142,8 @@ Usage: kaban.ai {start|stop|restart|status}
   status   compose ps + health check
 
 Environment:
-  KABAN_DAEMON_BUILD=1  run 'compose up --build' on start
-  KABAN_LOG_FILE        default: $ROOT/logs/kaban.ai.log
+  STIGMER_DAEMON_BUILD=1  run 'compose up --build' on start
+  STIGMER_LOG_FILE        default: $ROOT/logs/stigmer.log
 EOF
 }
 
@@ -153,7 +153,7 @@ main() {
     start) cmd_start ;;
     stop) cmd_stop ;;
     restart) cmd_restart ;;
-    status) KABAN_DAEMON_QUIET=0 cmd_status ;;
+    status) STIGMER_DAEMON_QUIET=0 cmd_status ;;
     -h|--help|help) usage ;;
     *)
       usage >&2

@@ -1,4 +1,4 @@
-# KABAN AI
+# STIGMER AI
 # Copyright (C) 2026 Eugene Tomashkov
 #
 # This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ sys.path.insert(0, str(BACKEND))
 
 
 def _reload_backend_modules():
-    for name in ("store", "agent", "app"):
+    for name in ("store", "agent", "app", "agent_registry", "board_auth"):
         if name in sys.modules:
             if name == "store":
                 try:
@@ -59,7 +59,7 @@ def pg_db():
 @pytest.fixture(autouse=True)
 def env_and_store(pg_db, monkeypatch):
     monkeypatch.setenv("DATABASE_URL", pg_db)
-    monkeypatch.setenv("KANBAN_API_KEY", "test-key")
+    monkeypatch.setenv("STIGMER_API_KEY", "test-key")
     monkeypatch.setenv("OPENAI_BASE_URL", "http://llm.test/v1")
     monkeypatch.setenv("OPENAI_API_KEY", "test-llm-key")
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
@@ -85,6 +85,8 @@ def env_and_store(pg_db, monkeypatch):
     with store.pool().connection() as conn:
         with conn.transaction():
             with conn.cursor() as cur:
+                cur.execute("TRUNCATE agent_events RESTART IDENTITY CASCADE;")
+                cur.execute("TRUNCATE agents RESTART IDENTITY CASCADE;")
                 cur.execute("TRUNCATE card_labels RESTART IDENTITY CASCADE;")
                 cur.execute("TRUNCATE cards RESTART IDENTITY CASCADE;")
                 cur.execute("TRUNCATE labels RESTART IDENTITY CASCADE;")

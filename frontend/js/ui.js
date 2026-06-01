@@ -16,12 +16,7 @@ import { openAddCard } from './cards.js';
 import { openFromTextModal } from './ai.js';
 import { icon } from './icons.js';
 
-const THEME_STORAGE_KEY = 'kaban-theme';
-
-const THEME_META_COLORS = {
-  dark: '#0b0c0e',
-  light: '#d4cebf',
-};
+const THEME_STORAGE_KEY = 'stigmer-theme';
 
 export function getStoredTheme() {
   try {
@@ -32,9 +27,11 @@ export function getStoredTheme() {
   }
 }
 
-function updateThemeMeta(theme) {
+function updateThemeMeta() {
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', THEME_META_COLORS[theme]);
+  if (!meta) return;
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  if (bg) meta.setAttribute('content', bg);
 }
 
 function updateThemeIcon(theme) {
@@ -52,7 +49,7 @@ export function applyTheme(theme) {
   } catch {
     /* private mode / blocked storage */
   }
-  updateThemeMeta(next);
+  updateThemeMeta();
   updateThemeIcon(next);
 }
 
@@ -183,7 +180,7 @@ export function updateLockButton() {
 
 export function toggleBoardLock() {
   state.boardLocked = !state.boardLocked;
-  localStorage.setItem('kaban_board_locked', state.boardLocked ? 'true' : 'false');
+  localStorage.setItem('stigmer_board_locked', state.boardLocked ? 'true' : 'false');
   updateLockButton();
   render();
 }

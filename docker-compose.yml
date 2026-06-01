@@ -2,13 +2,13 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: kaban
-      POSTGRES_USER: kaban
-      POSTGRES_PASSWORD: kaban
+      POSTGRES_DB: stigmer
+      POSTGRES_USER: stigmer
+      POSTGRES_PASSWORD: stigmer
     volumes:
-      - kaban-postgres-data:/var/lib/postgresql/data
+      - stigmer-postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U kaban -d kaban"]
+      test: ["CMD-SHELL", "pg_isready -U stigmer -d stigmer"]
       interval: 2s
       timeout: 2s
       retries: 30
@@ -19,7 +19,7 @@ services:
       - .env
     environment:
       # Default DSN when .env omits DATABASE_URL; do not use bare ${DATABASE_URL} (empty host var wipes .env).
-      DATABASE_URL: ${DATABASE_URL:-postgresql://kaban:kaban@postgres:5432/kaban}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://stigmer:stigmer@postgres:5432/stigmer}
     volumes:
       - ./backend/data:/app/data
     extra_hosts:
@@ -44,4 +44,4 @@ services:
       - backend
 
 volumes:
-  kaban-postgres-data:
+  stigmer-postgres-data:

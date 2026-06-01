@@ -1,4 +1,4 @@
-# KABAN AI
+# STIGMER AI
 # Copyright (C) 2026 Eugene Tomashkov
 #
 # This program is free software: you can redistribute it and/or modify
@@ -24,6 +24,12 @@ from typing import Any, Optional
 from psycopg import Connection
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
+from task_errors import (
+    AlreadyClaimedError,
+    LeaseLostError,
+    NotTaskHolderError,
+    VersionConflictError,
+)
 
 
 def _require_env(name: str) -> str:
@@ -84,14 +90,65 @@ DEFAULT_LABELS = [
     {"id": "indigo", "name": "Research", "tone": "indigo", "emoji": "🔮"},
 ]
 
-STARTER_CARD_ID = "kaban-starter"
+STARTER_CARD_ID = "stigmer-starter"
 STARTER_CARD_TITLE = (
-    "Welcome to KABAN AI\n"
+    "Welcome to STIGMER AI\n"
     'Try "From text" — paste a note, get a task\n'
     "Use AI chat to move cards or summarize\n"
     "Drag cards across columns as work progresses\n"
     "Delete this card anytime"
 )
+
+DONE_COLUMN_SLUG = "done"
+
+_CARD_GROUP_BY = (
+    "c.id, col.slug, c.title, c.description, c.position, c.pinned, c.flame, "
+    "c.version, c.claimed_by, c.claimed_at, c.lease_expires_at"
+)
+
+
+def lease_ttl_seconds() -> int:
+    raw = os.environ.get("STIGMERGY_LEASE_TTL_SEC", "300").strip()
+    try:
+        return max(60, int(raw))
+    except ValueError:
+        return 300
+
+
+def _ts_iso(value: Optional[datetime]) -> Optional[str]:
+    if value is None:
+        return None
+    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _card_dict(row: dict[str, Any]) -> dict[str, Any]:
+    lease_iso = _ts_iso(row.get("lease_expires_at"))
+    return {
+        "id": row["id"],
+        "col": row["col_slug"],
+        "title": row["title"],
+        "labels": list(row["label_slugs"] or []),
+        "desc": row["description"] or "",
+        "pinned": bool(row["pinned"]),
+        "flame": bool(row["flame"]),
+        "version": int(row.get("version") or 0),
+        "claimed_by": row.get("claimed_by"),
+        "claimed_at": _ts_iso(row.get("claimed_at")),
+        "lease_expires_at": lease_iso,
+        # Task 3 HTTP layer used lease_until briefly; keep alias for compat.
+        "lease_until": lease_iso,
+    }
+
+
+def task_summary(card: dict[str, Any]) -> dict[str, Any]:
+    """Narrow task view for list_available_tasks / LLM tools."""
+    return {
+        "id": card["id"],
+        "title": card["title"],
+        "column": card["col"],
+        "labels": card["labels"],
+        "version": card["version"],
+    }
 
 
 @dataclass(frozen=True)
@@ -286,7 +343,7 @@ def get_card(card_id: str) -> dict[str, Any]:
         _ensure_seeded(conn)
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     c.id,
                     col.slug AS col_slug,
@@ -294,31 +351,83 @@ def get_card(card_id: str) -> dict[str, Any]:
                     c.description,
                     c.pinned,
                     c.flame,
+                    c.version,
+                    c.claimed_by,
+                    c.claimed_at,
+                    c.lease_expires_at,
                     COALESCE(
                         array_agg(l.slug) FILTER (WHERE l.slug IS NOT NULL),
-                        '{}'
+                        '{{}}'
                     ) AS label_slugs
                 FROM cards c
                 JOIN columns col ON col.id = c.column_id
                 LEFT JOIN card_labels cl ON cl.card_id = c.id
                 LEFT JOIN labels l ON l.id = cl.label_id
                 WHERE c.id = %s
-                GROUP BY c.id, col.slug, c.title, c.description, c.pinned, c.flame;
+                GROUP BY {_CARD_GROUP_BY};
                 """,
                 (card_id,),
             )
             row = cur.fetchone()
             if row is None:
                 raise ValueError(f"Unknown card id: {card_id}")
-            return {
-                "id": row["id"],
-                "col": row["col_slug"],
-                "title": row["title"],
-                "labels": list(row["label_slugs"] or []),
-                "desc": row["description"] or "",
-                "pinned": bool(row["pinned"]),
-                "flame": bool(row["flame"]),
-            }
+            return _card_dict(row)
+
+
+def list_available_tasks(
+    *,
+    column_slug: Optional[str] = None,
+    label_slug: Optional[str] = None,
+) -> list[dict[str, Any]]:
+    """Cards that are free to claim (unclaimed or stale lease), excluding done."""
+    with pool().connection() as conn:
+        conn.execute("SET TIME ZONE 'UTC';")
+        _ensure_seeded(conn)
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                f"""
+                SELECT
+                    c.id,
+                    col.slug AS col_slug,
+                    c.title,
+                    c.description,
+                    c.pinned,
+                    c.flame,
+                    c.version,
+                    c.claimed_by,
+                    c.claimed_at,
+                    c.lease_expires_at,
+                    COALESCE(
+                        array_agg(l.slug) FILTER (WHERE l.slug IS NOT NULL),
+                        '{{}}'
+                    ) AS label_slugs
+                FROM cards c
+                JOIN columns col ON col.id = c.column_id
+                LEFT JOIN card_labels cl ON cl.card_id = c.id
+                LEFT JOIN labels l ON l.id = cl.label_id
+                WHERE col.slug <> %s
+                  AND (c.claimed_by IS NULL OR c.lease_expires_at < now())
+                  AND (%s::text IS NULL OR col.slug = %s)
+                  AND (
+                    %s::text IS NULL
+                    OR EXISTS (
+                      SELECT 1 FROM card_labels cl2
+                      JOIN labels l2 ON l2.id = cl2.label_id
+                      WHERE cl2.card_id = c.id AND l2.slug = %s
+                    )
+                  )
+                GROUP BY {_CARD_GROUP_BY}
+                ORDER BY c.position ASC;
+                """,
+                (
+                    DONE_COLUMN_SLUG,
+                    column_slug,
+                    column_slug,
+                    label_slug,
+                    label_slug,
+                ),
+            )
+            return [task_summary(_card_dict(row)) for row in cur.fetchall()]
 
 
 def get_board() -> dict[str, Any]:
@@ -331,7 +440,7 @@ def get_board() -> dict[str, Any]:
 
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     c.id,
                     col.slug AS col_slug,
@@ -340,31 +449,23 @@ def get_board() -> dict[str, Any]:
                     c.position,
                     c.pinned,
                     c.flame,
+                    c.version,
+                    c.claimed_by,
+                    c.claimed_at,
+                    c.lease_expires_at,
                     COALESCE(
                         array_agg(l.slug) FILTER (WHERE l.slug IS NOT NULL),
-                        '{}'
+                        '{{}}'
                     ) AS label_slugs
                 FROM cards c
                 JOIN columns col ON col.id = c.column_id
                 LEFT JOIN card_labels cl ON cl.card_id = c.id
                 LEFT JOIN labels l ON l.id = cl.label_id
-                GROUP BY c.id, col.slug, c.title, c.description, c.position, c.pinned, c.flame
+                GROUP BY {_CARD_GROUP_BY}
                 ORDER BY c.pinned DESC, c.position ASC;
                 """
             )
-            cards = []
-            for row in cur.fetchall():
-                cards.append(
-                    {
-                        "id": row["id"],
-                        "col": row["col_slug"],
-                        "title": row["title"],
-                        "labels": list(row["label_slugs"] or []),
-                        "desc": row["description"] or "",
-                        "pinned": bool(row["pinned"]),
-                        "flame": bool(row["flame"]),
-                    }
-                )
+            cards = [_card_dict(row) for row in cur.fetchall()]
 
         return {
             "columns": [{"id": c.slug, "title": c.name, "color": c.color} for c in columns],
@@ -631,7 +732,7 @@ def create_card(
 
         with conn.cursor(row_factory=dict_row) as cur:
             cur.execute(
-                """
+                f"""
                 SELECT
                     c.id,
                     col.slug AS col_slug,
@@ -639,29 +740,45 @@ def create_card(
                     c.description,
                     c.pinned,
                     c.flame,
+                    c.version,
+                    c.claimed_by,
+                    c.claimed_at,
+                    c.lease_expires_at,
                     COALESCE(
                         array_agg(l.slug) FILTER (WHERE l.slug IS NOT NULL),
-                        '{}'
+                        '{{}}'
                     ) AS label_slugs
                 FROM cards c
                 JOIN columns col ON col.id = c.column_id
                 LEFT JOIN card_labels cl ON cl.card_id = c.id
                 LEFT JOIN labels l ON l.id = cl.label_id
                 WHERE c.id = %s
-                GROUP BY c.id, col.slug, c.title, c.description, c.pinned, c.flame;
+                GROUP BY {_CARD_GROUP_BY};
                 """,
                 (card_id,),
             )
             row = cur.fetchone()
-            return {
-                "id": row["id"],
-                "col": row["col_slug"],
-                "title": row["title"],
-                "labels": list(row["label_slugs"] or []),
-                "desc": row["description"] or "",
-                "pinned": bool(row["pinned"]),
-                "flame": bool(row["flame"]),
-            }
+            return _card_dict(row)
+
+
+def _apply_card_labels(cur: Any, card_id: str, labels: list[str]) -> None:
+    cur.execute("DELETE FROM card_labels WHERE card_id = %s;", (card_id,))
+    if not labels:
+        return
+    cur.execute("SELECT id::text, slug FROM labels;")
+    label_ids = {slug: lid for lid, slug in cur.fetchall()}
+    for slug in labels:
+        lid = label_ids.get(slug)
+        if not lid:
+            continue
+        cur.execute(
+            """
+            INSERT INTO card_labels (card_id, label_id)
+            VALUES (%s, %s)
+            ON CONFLICT DO NOTHING;
+            """,
+            (card_id, lid),
+        )
 
 
 def update_card(
@@ -673,10 +790,24 @@ def update_card(
     labels: Optional[list[str]] = None,
     pinned: Optional[bool] = None,
     flame: Optional[bool] = None,
+    expected_version: Optional[int] = None,
 ) -> dict[str, Any]:
+    if expected_version is not None:
+        return _update_card_optimistic(
+            card_id,
+            title=title,
+            desc=desc,
+            column_slug=column_slug,
+            labels=labels,
+            pinned=pinned,
+            flame=flame,
+            expected_version=expected_version,
+        )
+
     with pool().connection() as conn:
         conn.execute("SET TIME ZONE 'UTC';")
         _ensure_seeded(conn)
+        changed = False
         with conn.transaction():
             with conn.cursor() as cur:
                 if column_slug is not None:
@@ -687,83 +818,117 @@ def update_card(
                         "UPDATE cards SET column_id = %s, updated_at = now() WHERE id = %s;",
                         (col_id, card_id),
                     )
+                    changed = True
 
                 if title is not None:
                     cur.execute(
                         "UPDATE cards SET title = %s, updated_at = now() WHERE id = %s;",
                         (title, card_id),
                     )
+                    changed = True
                 if desc is not None:
                     cur.execute(
                         "UPDATE cards SET description = %s, updated_at = now() WHERE id = %s;",
                         (desc, card_id),
                     )
+                    changed = True
                 if pinned is not None:
                     cur.execute(
                         "UPDATE cards SET pinned = %s, updated_at = now() WHERE id = %s;",
                         (pinned, card_id),
                     )
+                    changed = True
                 if flame is not None:
                     cur.execute(
                         "UPDATE cards SET flame = %s, updated_at = now() WHERE id = %s;",
                         (flame, card_id),
                     )
+                    changed = True
 
                 if labels is not None:
-                    cur.execute("DELETE FROM card_labels WHERE card_id = %s;", (card_id,))
-                    if labels:
-                        cur.execute("SELECT id::text, slug FROM labels;")
-                        label_ids = {slug: lid for lid, slug in cur.fetchall()}
-                        for slug in labels:
-                            lid = label_ids.get(slug)
-                            if not lid:
-                                continue
-                            cur.execute(
-                                """
-                                INSERT INTO card_labels (card_id, label_id)
-                                VALUES (%s, %s)
-                                ON CONFLICT DO NOTHING;
-                                """,
-                                (card_id, lid),
-                            )
+                    _apply_card_labels(cur, card_id, labels)
+                    changed = True
 
                 cur.execute("SELECT 1 FROM cards WHERE id = %s;", (card_id,))
                 if cur.fetchone() is None:
                     raise ValueError(f"Unknown card id: {card_id}")
 
-        with conn.cursor(row_factory=dict_row) as cur:
-            cur.execute(
-                """
-                SELECT
-                    c.id,
-                    col.slug AS col_slug,
-                    c.title,
-                    c.description,
-                    c.pinned,
-                    c.flame,
-                    COALESCE(
-                        array_agg(l.slug) FILTER (WHERE l.slug IS NOT NULL),
-                        '{}'
-                    ) AS label_slugs
-                FROM cards c
-                JOIN columns col ON col.id = c.column_id
-                LEFT JOIN card_labels cl ON cl.card_id = c.id
-                LEFT JOIN labels l ON l.id = cl.label_id
-                WHERE c.id = %s
-                GROUP BY c.id, col.slug, c.title, c.description, c.pinned, c.flame;
-                """,
-                (card_id,),
-            )
-            row = cur.fetchone()
-            return {
-                "id": row["id"],
-                "col": row["col_slug"],
-                "title": row["title"],
-                "labels": list(row["label_slugs"] or []),
-                "desc": row["description"] or "",
-                "pinned": bool(row["pinned"]),
-                "flame": bool(row["flame"]),
-            }
+                if changed:
+                    cur.execute(
+                        """
+                        UPDATE cards
+                        SET version = version + 1, updated_at = now()
+                        WHERE id = %s;
+                        """,
+                        (card_id,),
+                    )
+
+    return get_card(card_id)
+
+
+def _update_card_optimistic(
+    card_id: str,
+    *,
+    title: Optional[str],
+    desc: Optional[str],
+    column_slug: Optional[str],
+    labels: Optional[list[str]],
+    pinned: Optional[bool],
+    flame: Optional[bool],
+    expected_version: int,
+) -> dict[str, Any]:
+    assignments: list[str] = []
+    params: list[Any] = []
+
+    if column_slug is not None:
+        assignments.append("column_id = %s")
+    if title is not None:
+        assignments.append("title = %s")
+        params.append(title)
+    if desc is not None:
+        assignments.append("description = %s")
+        params.append(desc)
+    if pinned is not None:
+        assignments.append("pinned = %s")
+        params.append(pinned)
+    if flame is not None:
+        assignments.append("flame = %s")
+        params.append(flame)
+
+    scalar_change = bool(assignments) or labels is not None
+    if not scalar_change:
+        raise ValueError("No card fields to update")
+
+    with pool().connection() as conn:
+        conn.execute("SET TIME ZONE 'UTC';")
+        _ensure_seeded(conn)
+        if column_slug is not None:
+            col_id = _column_uuid(conn, column_slug)
+            if not col_id:
+                raise ValueError(f"Unknown column slug: {column_slug}")
+            params.insert(0, col_id)
+        with conn.transaction():
+            with conn.cursor(row_factory=dict_row) as cur:
+                set_parts = assignments + ["version = version + 1", "updated_at = now()"]
+                cur.execute(
+                    f"""
+                    UPDATE cards
+                    SET {", ".join(set_parts)}
+                    WHERE id = %s AND version = %s
+                    RETURNING id;
+                    """,
+                    (*params, card_id, expected_version),
+                )
+                if cur.fetchone() is None:
+                    cur.execute("SELECT 1 FROM cards WHERE id = %s;", (card_id,))
+                    if cur.fetchone() is None:
+                        raise ValueError(f"Unknown card id: {card_id}")
+                    raise VersionConflictError(card_id, expected_version)
+
+                if labels is not None:
+                    _apply_card_labels(cur, card_id, labels)
+
+    return get_card(card_id)
 
 
 def move_card(card_id: str, *, column_slug: str, before_card_id: Optional[str] = None) -> None:
@@ -779,7 +944,10 @@ def move_card(card_id: str, *, column_slug: str, before_card_id: Optional[str] =
                 cur.execute(
                     """
                     UPDATE cards
-                    SET column_id = %s, position = %s, updated_at = now()
+                    SET column_id = %s,
+                        position = %s,
+                        version = version + 1,
+                        updated_at = now()
                     WHERE id = %s;
                     """,
                     (col_id, pos, card_id),
@@ -843,3 +1011,207 @@ def move_column(slug: str, *, index: int) -> None:
                         "UPDATE columns SET position = %s WHERE slug = %s;",
                         (_col_pos(i), s),
                     )
+
+
+def append_agent_event(*, agent_id: str, action: str, card_id: Optional[str]) -> None:
+    with pool().connection() as conn:
+        conn.execute("SET TIME ZONE 'UTC';")
+        with conn.transaction():
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1 FROM agents WHERE agent_id = %s;", (agent_id,))
+                if cur.fetchone() is None:
+                    return
+                cur.execute(
+                    """
+                    INSERT INTO agent_events (agent_id, action, card_id)
+                    VALUES (%s, %s, %s);
+                    """,
+                    (agent_id, action, card_id),
+                )
+
+
+def claim(card_id: str, *, agent_id: str) -> Optional[dict[str, Any]]:
+    """Atomic claim (or stale-lease reclaim). None if held by a live lease."""
+    ttl = lease_ttl_seconds()
+    with pool().connection() as conn:
+        conn.execute("SET TIME ZONE 'UTC';")
+        _ensure_seeded(conn)
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                UPDATE cards
+                SET claimed_by = %s,
+                    claimed_at = now(),
+                    lease_expires_at = now() + interval '1 second' * %s,
+                    version = version + 1,
+                    updated_at = now()
+                WHERE id = %s
+                  AND (claimed_by IS NULL OR lease_expires_at < now())
+                RETURNING id;
+                """,
+                (agent_id, ttl, card_id),
+            )
+            if cur.fetchone() is None:
+                return None
+    return get_card(card_id)
+
+
+def renew_lease(card_id: str, *, agent_id: str) -> Optional[dict[str, Any]]:
+    """Extend lease for the current holder. None if not holder or lease expired."""
+    ttl = lease_ttl_seconds()
+    with pool().connection() as conn:
+        conn.execute("SET TIME ZONE 'UTC';")
+        _ensure_seeded(conn)
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                UPDATE cards
+                SET lease_expires_at = now() + interval '1 second' * %s,
+                    version = version + 1,
+                    updated_at = now()
+                WHERE id = %s
+                  AND claimed_by = %s
+                  AND lease_expires_at >= now()
+                RETURNING id;
+                """,
+                (ttl, card_id, agent_id),
+            )
+            if cur.fetchone() is None:
+                return None
+    return get_card(card_id)
+
+
+def release(card_id: str, *, agent_id: str) -> Optional[dict[str, Any]]:
+    """Release claim. None if another agent holds a live lease."""
+    with pool().connection() as conn:
+        conn.execute("SET TIME ZONE 'UTC';")
+        _ensure_seeded(conn)
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute(
+                """
+                UPDATE cards
+                SET claimed_by = NULL,
+                    claimed_at = NULL,
+                    lease_expires_at = NULL,
+                    version = version + 1,
+                    updated_at = now()
+                WHERE id = %s
+                  AND (claimed_by IS NULL OR claimed_by = %s)
+                RETURNING id;
+                """,
+                (card_id, agent_id),
+            )
+            if cur.fetchone() is None:
+                return None
+    return get_card(card_id)
+
+
+def complete(
+    card_id: str,
+    *,
+    agent_id: str,
+    result_note: Optional[str] = None,
+) -> Optional[dict[str, Any]]:
+    """Move to done and clear claim in one update. None if held by another agent."""
+    note = (result_note or "").strip()
+    with pool().connection() as conn:
+        conn.execute("SET TIME ZONE 'UTC';")
+        _ensure_seeded(conn)
+        done_id = _column_uuid(conn, DONE_COLUMN_SLUG)
+        if not done_id:
+            raise ValueError(f"Unknown column slug: {DONE_COLUMN_SLUG}")
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT COALESCE(MAX(position), 0) FROM cards WHERE column_id = %s;",
+                (done_id,),
+            )
+            pos = float(cur.fetchone()[0]) + 1024.0
+            if note:
+                cur.execute(
+                    """
+                    UPDATE cards
+                    SET column_id = %s,
+                        position = %s,
+                        description = CASE
+                            WHEN COALESCE(description, '') = '' THEN %s
+                            ELSE description || E'\\n\\n' || %s
+                        END,
+                        claimed_by = NULL,
+                        claimed_at = NULL,
+                        lease_expires_at = NULL,
+                        version = version + 1,
+                        updated_at = now()
+                    WHERE id = %s
+                      AND (claimed_by IS NULL OR claimed_by = %s)
+                    RETURNING id;
+                    """,
+                    (done_id, pos, note, note, card_id, agent_id),
+                )
+            else:
+                cur.execute(
+                    """
+                    UPDATE cards
+                    SET column_id = %s,
+                        position = %s,
+                        claimed_by = NULL,
+                        claimed_at = NULL,
+                        lease_expires_at = NULL,
+                        version = version + 1,
+                        updated_at = now()
+                    WHERE id = %s
+                      AND (claimed_by IS NULL OR claimed_by = %s)
+                    RETURNING id;
+                    """,
+                    (done_id, pos, card_id, agent_id),
+                )
+            if cur.fetchone() is None:
+                return None
+    return get_card(card_id)
+
+
+def _require_card_exists(card_id: str) -> dict[str, Any]:
+    return get_card(card_id)
+
+
+def claim_task(card_id: str, *, agent_id: str) -> dict[str, Any]:
+    _require_card_exists(card_id)
+    card = claim(card_id, agent_id=agent_id)
+    if card is None:
+        raise AlreadyClaimedError()
+    append_agent_event(agent_id=agent_id, action="claim", card_id=card_id)
+    return card
+
+
+def heartbeat_task(card_id: str, *, agent_id: str) -> dict[str, Any]:
+    _require_card_exists(card_id)
+    card = renew_lease(card_id, agent_id=agent_id)
+    if card is None:
+        raise LeaseLostError()
+    return card
+
+
+def release_task(card_id: str, *, agent_id: str) -> dict[str, Any]:
+    existing = _require_card_exists(card_id)
+    card = release(card_id, agent_id=agent_id)
+    if card is None:
+        if existing["claimed_by"] and existing["claimed_by"] != agent_id:
+            raise NotTaskHolderError()
+        return existing
+    append_agent_event(agent_id=agent_id, action="release", card_id=card_id)
+    return card
+
+
+def complete_task(
+    card_id: str,
+    *,
+    agent_id: str,
+    result_note: Optional[str] = None,
+) -> dict[str, Any]:
+    existing = _require_card_exists(card_id)
+    card = complete(card_id, agent_id=agent_id, result_note=result_note)
+    if card is None:
+        if existing["claimed_by"] and existing["claimed_by"] != agent_id:
+            raise NotTaskHolderError()
+        raise ValueError(f"Unknown card id: {card_id}")
+    append_agent_event(agent_id=agent_id, action="complete", card_id=card_id)
+    return card

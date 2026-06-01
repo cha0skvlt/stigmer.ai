@@ -65,7 +65,7 @@ export let state = {
   ctxCardId: null,
   fromTextBusy: false,
   aiBusy: false,
-  boardLocked: localStorage.getItem('kaban_board_locked') !== 'false',
+  boardLocked: localStorage.getItem('stigmer_board_locked') !== 'false',
   aiOpen: false,
 };
 

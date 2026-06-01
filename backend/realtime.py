@@ -7,7 +7,7 @@ from psycopg import AsyncConnection
 
 
 def _expected_api_key() -> str:
-    return os.environ.get("KANBAN_API_KEY", "")
+    return os.environ.get("STIGMER_API_KEY", "")
 
 
 def _database_url() -> str:

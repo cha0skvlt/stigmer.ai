@@ -1,4 +1,4 @@
-# KABAN AI
+# STIGMER AI
 # Copyright (C) 2026 Eugene Tomashkov
 #
 # This program is free software: you can redistribute it and/or modify
@@ -14,31 +14,37 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-import os
 from pathlib import Path
 from typing import Any, Optional
 
 import httpx
 from agent import run_agent, run_from_text
-from fastapi import Depends, FastAPI, Header, HTTPException
+from board_auth import require_task_actor, verify_api_key
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from realtime import register_realtime
 from store import (
+    claim_task,
+    complete_task,
     create_card,
     create_column,
     delete_card,
     delete_column,
     get_board,
     get_card,
+    heartbeat_task,
+    list_available_tasks,
     list_columns,
     list_labels,
     move_card,
     move_column,
+    release_task,
     rename_column,
     replace_labels,
     update_card,
 )
+from task_api import map_task_exception
 
 # Load .env when running outside Docker (optional)
 try:
@@ -48,7 +54,7 @@ try:
 except ImportError:
     pass
 
-app = FastAPI(title="KABAN AI API")
+app = FastAPI(title="STIGMER AI API")
 register_realtime(app)
 
 app.add_middleware(
@@ -93,6 +99,10 @@ class CardPatchRequest(BaseModel):
     labels: Optional[list[str]] = None
     pinned: Optional[bool] = None
     flame: Optional[bool] = None
+    version: Optional[int] = Field(
+        default=None,
+        description="Expected row version for optimistic locking (409 on mismatch)",
+    )
 
 
 class CardMoveRequest(BaseModel):
@@ -118,12 +128,24 @@ class LabelsReplaceRequest(BaseModel):
     labels: list[Any] = Field(default_factory=list)
 
 
-def verify_api_key(x_api_key: Optional[str] = Header(default=None, alias="X-API-Key")):
-    expected = os.environ.get("KANBAN_API_KEY", "")
-    if not expected:
-        raise HTTPException(status_code=500, detail="KANBAN_API_KEY is not configured")
-    if x_api_key != expected:
-        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+class TaskActionBody(BaseModel):
+    """Body fields are ignored for identity; actor comes from auth headers only."""
+
+    agent_id: Optional[str] = Field(
+        default=None,
+        description="Ignored — authenticated credential sets the owner",
+    )
+
+
+class TaskCompleteBody(BaseModel):
+    result_note: Optional[str] = Field(
+        default=None,
+        description="Optional completion trace appended to the card description",
+    )
+    agent_id: Optional[str] = Field(
+        default=None,
+        description="Ignored — authenticated credential sets the owner",
+    )
 
 
 @app.get("/api/health")
@@ -180,7 +202,7 @@ def api_get_card(card_id: str):
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
-@app.post("/api/cards", dependencies=[Depends(verify_api_key)])
+@app.post("/api/cards", status_code=201, dependencies=[Depends(verify_api_key)])
 def api_create_card(req: CardCreateRequest):
     try:
         card = create_card(
@@ -208,9 +230,10 @@ def api_patch_card(card_id: str, req: CardPatchRequest):
             labels=req.labels,
             pinned=req.pinned,
             flame=req.flame,
+            expected_version=req.version,
         )
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise map_task_exception(exc) from exc
     return card
 
 
@@ -270,6 +293,75 @@ async def agent(req: AgentRequest):
         raise HTTPException(status_code=502, detail=f"LLM request failed: {exc}") from exc
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/api/tasks/available")
+def api_list_available_tasks(
+    column: Optional[str] = None,
+    label: Optional[str] = None,
+    _actor_id: str = Depends(require_task_actor),
+):
+    tasks = list_available_tasks(column_slug=column, label_slug=label)
+    return {"tasks": tasks}
+
+
+@app.post("/api/tasks/{card_id}/claim")
+def api_claim_task(
+    card_id: str,
+    _body: TaskActionBody,
+    actor_id: str = Depends(require_task_actor),
+):
+    try:
+        return claim_task(card_id, agent_id=actor_id)
+    except Exception as exc:
+        raise map_task_exception(exc) from exc
+
+
+@app.post("/api/tasks/{card_id}/heartbeat")
+def api_heartbeat_task(
+    card_id: str,
+    _body: TaskActionBody,
+    actor_id: str = Depends(require_task_actor),
+):
+    try:
+        return heartbeat_task(card_id, agent_id=actor_id)
+    except Exception as exc:
+        raise map_task_exception(exc) from exc
+
+
+@app.post("/api/tasks/{card_id}/release")
+def api_release_task(
+    card_id: str,
+    _body: TaskActionBody,
+    actor_id: str = Depends(require_task_actor),
+):
+    try:
+        return release_task(card_id, agent_id=actor_id)
+    except Exception as exc:
+        raise map_task_exception(exc) from exc
+
+
+@app.post("/api/tasks/{card_id}/complete")
+def api_complete_task(
+    card_id: str,
+    body: TaskCompleteBody,
+    actor_id: str = Depends(require_task_actor),
+):
+    try:
+        return complete_task(
+            card_id,
+            agent_id=actor_id,
+            result_note=body.result_note,
+        )
+    except Exception as exc:
+        raise map_task_exception(exc) from exc
+
+
+@app.get("/api/agent/tools", dependencies=[Depends(verify_api_key)])
+def api_agent_tools():
+    from agent_tools import load_agent_tools
+
+    return {"tools": load_agent_tools()}
 
 
 @app.post("/api/agent/from-text", dependencies=[Depends(verify_api_key)])

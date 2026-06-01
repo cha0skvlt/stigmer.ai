@@ -1,4 +1,4 @@
-# KABAN AI
+# STIGMER AI
 # Copyright (C) 2026 Eugene Tomashkov
 #
 # This program is free software: you can redistribute it and/or modify
@@ -30,7 +30,7 @@ ALLOWED_TYPES = {
     "summarize_board",
 }
 
-SYSTEM_PROMPT = """You are a Kaban board assistant. You receive a user command and the current board_state (columns and cards).
+SYSTEM_PROMPT = """You are a Stigmer board assistant. You receive a user command and the current board_state (columns and cards).
 
 Return ONLY valid JSON with this exact shape:
 {"actions": [...], "message": "short user-facing reply"}
@@ -63,7 +63,7 @@ User: "what is in Backlog?"
 User: "give me a board summary"
 {"actions":[],"message":"Total tasks: 1\\nBacklog: 1, Ideas: 0, ..."}"""
 
-FROM_TEXT_PROMPT = """You turn messy pasted text into exactly ONE Kaban task.
+FROM_TEXT_PROMPT = """You turn messy pasted text into exactly ONE Stigmer task.
 
 Input JSON: {"raw_text": "...", "board_state": {"columns": [...], "cards": [...]}}
 
