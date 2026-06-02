@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 TOOLS_PATH = Path(__file__).resolve().parent / "agent_tools.json"
 
@@ -23,7 +23,7 @@ def load_agent_tools() -> list[dict[str, Any]]:
         return json.load(handle)
 
 
-def validate_agent_tools(tools: Optional[list[dict[str, Any]]] = None) -> None:
+def validate_agent_tools(tools: list[dict[str, Any]] | None = None) -> None:
     """Raise ValueError if the tool spec is missing required contract fields."""
     tools = tools if tools is not None else load_agent_tools()
     if not isinstance(tools, list):

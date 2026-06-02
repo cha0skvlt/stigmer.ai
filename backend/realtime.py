@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from psycopg import AsyncConnection
@@ -20,7 +20,7 @@ def _database_url() -> str:
 class BoardWsHub:
     def __init__(self) -> None:
         self._clients: set[WebSocket] = set()
-        self._listen_task: Optional[asyncio.Task] = None
+        self._listen_task: asyncio.Task | None = None
         self._lock = asyncio.Lock()
 
     async def add(self, ws: WebSocket) -> None:
@@ -47,7 +47,7 @@ class BoardWsHub:
                 return False
 
         results = await asyncio.gather(*(_send(ws) for ws in clients), return_exceptions=True)
-        dead = [ws for ws, ok in zip(clients, results) if ok is not True]
+        dead = [ws for ws, ok in zip(clients, results, strict=True) if ok is not True]
         if dead:
             async with self._lock:
                 for ws in dead:

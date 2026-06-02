@@ -1,6 +1,5 @@
 # STIGMER AI — board authentication (human legacy key + per-agent keys).
 
-from typing import Optional
 
 from agent_registry import (
     HUMAN_AGENT_ID,
@@ -12,8 +11,8 @@ from fastapi import Header, HTTPException
 
 
 def resolve_actor_id(
-    x_api_key: Optional[str],
-    x_agent_key: Optional[str],
+    x_api_key: str | None,
+    x_agent_key: str | None,
 ) -> str:
     """Resolve authenticated actor: X-Agent-Key → agent row, X-API-Key → human."""
     if x_agent_key:
@@ -31,7 +30,7 @@ def resolve_actor_id(
     return HUMAN_AGENT_ID
 
 
-def verify_api_key(x_api_key: Optional[str] = Header(default=None, alias="X-API-Key")):
+def verify_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")):
     """Legacy human/UI auth for non-agent routes."""
     expected = human_api_key()
     if not expected:
@@ -41,8 +40,8 @@ def verify_api_key(x_api_key: Optional[str] = Header(default=None, alias="X-API-
 
 
 def require_task_actor(
-    x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
-    x_agent_key: Optional[str] = Header(default=None, alias="X-Agent-Key"),
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+    x_agent_key: str | None = Header(default=None, alias="X-Agent-Key"),
 ) -> str:
     """Task claim endpoints: per-agent key or human legacy key."""
     return resolve_actor_id(x_api_key, x_agent_key)

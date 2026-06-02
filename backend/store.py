@@ -18,8 +18,8 @@ import json
 import os
 from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from psycopg import Connection
 from psycopg.rows import dict_row
@@ -44,7 +44,7 @@ def _dsn() -> str:
     return _require_env("DATABASE_URL")
 
 
-POOL: Optional[ConnectionPool] = None
+POOL: ConnectionPool | None = None
 
 
 def pool() -> ConnectionPool:
@@ -115,10 +115,10 @@ def lease_ttl_seconds() -> int:
         return 300
 
 
-def _ts_iso(value: Optional[datetime]) -> Optional[str]:
+def _ts_iso(value: datetime | None) -> str | None:
     if value is None:
         return None
-    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _card_dict(row: dict[str, Any]) -> dict[str, Any]:
@@ -167,7 +167,7 @@ class LabelRow:
     name: str
     tone: str
     emoji: str
-    description: Optional[str]
+    description: str | None
 
 
 def _col_pos(i: int) -> float:
@@ -376,8 +376,8 @@ def get_card(card_id: str) -> dict[str, Any]:
 
 def list_available_tasks(
     *,
-    column_slug: Optional[str] = None,
-    label_slug: Optional[str] = None,
+    column_slug: str | None = None,
+    label_slug: str | None = None,
 ) -> list[dict[str, Any]]:
     """Cards that are free to claim (unclaimed or stale lease), excluding done."""
     with pool().connection() as conn:
@@ -613,18 +613,18 @@ def append_agent_history(command: str, actions: Iterable[dict[str, Any]]) -> Non
                     INSERT INTO agent_history (command, actions, created_at)
                     VALUES (%s, %s, %s);
                     """,
-                    (command, json.dumps(list(actions)), datetime.now(timezone.utc)),
+                    (command, json.dumps(list(actions)), datetime.now(UTC)),
                 )
 
 
-def _column_uuid(conn: Connection, slug: str) -> Optional[str]:
+def _column_uuid(conn: Connection, slug: str) -> str | None:
     with conn.cursor() as cur:
         cur.execute("SELECT id::text FROM columns WHERE slug = %s;", (slug,))
         row = cur.fetchone()
         return row[0] if row else None
 
 
-def _card_position(conn: Connection, column_slug: str, before_card_id: Optional[str]) -> float:
+def _card_position(conn: Connection, column_slug: str, before_card_id: str | None) -> float:
     col_id = _column_uuid(conn, column_slug)
     if not col_id:
         raise ValueError(f"Unknown column slug: {column_slug}")
@@ -673,10 +673,10 @@ def create_card(
     column_slug: str,
     title: str,
     desc: str = "",
-    labels: Optional[list[str]] = None,
+    labels: list[str] | None = None,
     pinned: bool = False,
     flame: bool = False,
-    card_id: Optional[str] = None,
+    card_id: str | None = None,
 ) -> dict[str, Any]:
     labels = labels or []
     with pool().connection() as conn:
@@ -784,13 +784,13 @@ def _apply_card_labels(cur: Any, card_id: str, labels: list[str]) -> None:
 def update_card(
     card_id: str,
     *,
-    title: Optional[str] = None,
-    desc: Optional[str] = None,
-    column_slug: Optional[str] = None,
-    labels: Optional[list[str]] = None,
-    pinned: Optional[bool] = None,
-    flame: Optional[bool] = None,
-    expected_version: Optional[int] = None,
+    title: str | None = None,
+    desc: str | None = None,
+    column_slug: str | None = None,
+    labels: list[str] | None = None,
+    pinned: bool | None = None,
+    flame: bool | None = None,
+    expected_version: int | None = None,
 ) -> dict[str, Any]:
     if expected_version is not None:
         return _update_card_optimistic(
@@ -869,12 +869,12 @@ def update_card(
 def _update_card_optimistic(
     card_id: str,
     *,
-    title: Optional[str],
-    desc: Optional[str],
-    column_slug: Optional[str],
-    labels: Optional[list[str]],
-    pinned: Optional[bool],
-    flame: Optional[bool],
+    title: str | None,
+    desc: str | None,
+    column_slug: str | None,
+    labels: list[str] | None,
+    pinned: bool | None,
+    flame: bool | None,
     expected_version: int,
 ) -> dict[str, Any]:
     assignments: list[str] = []
@@ -931,7 +931,7 @@ def _update_card_optimistic(
     return get_card(card_id)
 
 
-def move_card(card_id: str, *, column_slug: str, before_card_id: Optional[str] = None) -> None:
+def move_card(card_id: str, *, column_slug: str, before_card_id: str | None = None) -> None:
     with pool().connection() as conn:
         conn.execute("SET TIME ZONE 'UTC';")
         _ensure_seeded(conn)
@@ -1013,7 +1013,7 @@ def move_column(slug: str, *, index: int) -> None:
                     )
 
 
-def append_agent_event(*, agent_id: str, action: str, card_id: Optional[str]) -> None:
+def append_agent_event(*, agent_id: str, action: str, card_id: str | None) -> None:
     with pool().connection() as conn:
         conn.execute("SET TIME ZONE 'UTC';")
         with conn.transaction():
@@ -1030,7 +1030,7 @@ def append_agent_event(*, agent_id: str, action: str, card_id: Optional[str]) ->
                 )
 
 
-def claim(card_id: str, *, agent_id: str) -> Optional[dict[str, Any]]:
+def claim(card_id: str, *, agent_id: str) -> dict[str, Any] | None:
     """Atomic claim (or stale-lease reclaim). None if held by a live lease."""
     ttl = lease_ttl_seconds()
     with pool().connection() as conn:
@@ -1056,7 +1056,7 @@ def claim(card_id: str, *, agent_id: str) -> Optional[dict[str, Any]]:
     return get_card(card_id)
 
 
-def renew_lease(card_id: str, *, agent_id: str) -> Optional[dict[str, Any]]:
+def renew_lease(card_id: str, *, agent_id: str) -> dict[str, Any] | None:
     """Extend lease for the current holder. None if not holder or lease expired."""
     ttl = lease_ttl_seconds()
     with pool().connection() as conn:
@@ -1081,7 +1081,7 @@ def renew_lease(card_id: str, *, agent_id: str) -> Optional[dict[str, Any]]:
     return get_card(card_id)
 
 
-def release(card_id: str, *, agent_id: str) -> Optional[dict[str, Any]]:
+def release(card_id: str, *, agent_id: str) -> dict[str, Any] | None:
     """Release claim. None if another agent holds a live lease."""
     with pool().connection() as conn:
         conn.execute("SET TIME ZONE 'UTC';")
@@ -1110,8 +1110,8 @@ def complete(
     card_id: str,
     *,
     agent_id: str,
-    result_note: Optional[str] = None,
-) -> Optional[dict[str, Any]]:
+    result_note: str | None = None,
+) -> dict[str, Any] | None:
     """Move to done and clear claim in one update. None if held by another agent."""
     note = (result_note or "").strip()
     with pool().connection() as conn:
@@ -1205,7 +1205,7 @@ def complete_task(
     card_id: str,
     *,
     agent_id: str,
-    result_note: Optional[str] = None,
+    result_note: str | None = None,
 ) -> dict[str, Any]:
     existing = _require_card_exists(card_id)
     card = complete(card_id, agent_id=agent_id, result_note=result_note)

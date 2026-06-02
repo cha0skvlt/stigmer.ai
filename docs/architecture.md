@@ -1,6 +1,6 @@
 # Architecture
 
-Technical reference for **STIGMER AI** (v1.3). Product overview and screenshots: [README.md](../README.md).
+Technical reference for **STIGMER AI** (v1.4). Product overview and screenshots: [README.md](../README.md).
 
 ---
 
@@ -36,7 +36,8 @@ The web UI does **not** call `/api/tasks/*` or send `X-Agent-Key`. Claims and le
 | UI logic | ES modules (14 files) | [`frontend/js/`](../frontend/js/) — `api.js`, `cards.js`, `persist.js`, `realtime.js`, `ai.js`, … |
 | Styling | Design tokens + components | [`frontend/css/tokens.css`](../frontend/css/tokens.css), [`components.css`](../frontend/css/components.css) |
 | Themes | `data-theme`, `localStorage` `stigmer-theme` | [`frontend/js/ui.js`](../frontend/js/ui.js) — **night** (default), **day** |
-| API | Python 3.12, FastAPI, uvicorn | [`backend/app.py`](../backend/app.py) |
+| API | Python 3.13, FastAPI, uvicorn | [`backend/app.py`](../backend/app.py) |
+| Database | PostgreSQL 18 (Alpine) | [`docker-compose.yml`](../docker-compose.yml) |
 | Persistence | psycopg3 pool, raw SQL | [`backend/store.py`](../backend/store.py) |
 | Migrations | Alembic | [`backend/alembic/versions/`](../backend/alembic/versions/) |
 | LLM | httpx → OpenAI-compatible chat | [`backend/agent.py`](../backend/agent.py) |
@@ -219,7 +220,7 @@ Template: [`.env.example`](../.env.example).
 
 | Piece | Detail |
 |-------|--------|
-| Compose | [`docker-compose.yml`](../docker-compose.yml) — `postgres`, `backend`, `nginx` on **:8080** |
+| Compose | [`docker-compose.yml`](../docker-compose.yml) — `postgres:18-alpine`, `backend`, `nginx:1.28-alpine` on **:8080** |
 | UI mounts | Live edit: `frontend/stigmer.html`, `css/`, `js/`, `img/` |
 | Ollama | Host process; container uses `host.docker.internal:11434` |
 | Control | [`scripts/stigmer`](../scripts/stigmer) — `make start` \| `stop` \| `restart` \| `status` |

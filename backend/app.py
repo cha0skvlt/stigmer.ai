@@ -15,7 +15,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from agent import run_agent, run_from_text
@@ -89,17 +89,17 @@ class CardCreateRequest(BaseModel):
     labels: list[str] = Field(default_factory=list)
     pinned: bool = False
     flame: bool = False
-    card_id: Optional[str] = Field(default=None, description="Optional stable card id")
+    card_id: str | None = Field(default=None, description="Optional stable card id")
 
 
 class CardPatchRequest(BaseModel):
-    title: Optional[str] = None
-    desc: Optional[str] = None
-    column_id: Optional[str] = Field(default=None, description="Column slug")
-    labels: Optional[list[str]] = None
-    pinned: Optional[bool] = None
-    flame: Optional[bool] = None
-    version: Optional[int] = Field(
+    title: str | None = None
+    desc: str | None = None
+    column_id: str | None = Field(default=None, description="Column slug")
+    labels: list[str] | None = None
+    pinned: bool | None = None
+    flame: bool | None = None
+    version: int | None = Field(
         default=None,
         description="Expected row version for optimistic locking (409 on mismatch)",
     )
@@ -107,7 +107,7 @@ class CardPatchRequest(BaseModel):
 
 class CardMoveRequest(BaseModel):
     column_id: str = Field(..., description="Column slug")
-    before_card_id: Optional[str] = None
+    before_card_id: str | None = None
 
 
 class ColumnRenameRequest(BaseModel):
@@ -131,18 +131,18 @@ class LabelsReplaceRequest(BaseModel):
 class TaskActionBody(BaseModel):
     """Body fields are ignored for identity; actor comes from auth headers only."""
 
-    agent_id: Optional[str] = Field(
+    agent_id: str | None = Field(
         default=None,
         description="Ignored — authenticated credential sets the owner",
     )
 
 
 class TaskCompleteBody(BaseModel):
-    result_note: Optional[str] = Field(
+    result_note: str | None = Field(
         default=None,
         description="Optional completion trace appended to the card description",
     )
-    agent_id: Optional[str] = Field(
+    agent_id: str | None = Field(
         default=None,
         description="Ignored — authenticated credential sets the owner",
     )
@@ -297,8 +297,8 @@ async def agent(req: AgentRequest):
 
 @app.get("/api/tasks/available")
 def api_list_available_tasks(
-    column: Optional[str] = None,
-    label: Optional[str] = None,
+    column: str | None = None,
+    label: str | None = None,
     _actor_id: str = Depends(require_task_actor),
 ):
     tasks = list_available_tasks(column_slug=column, label_slug=label)

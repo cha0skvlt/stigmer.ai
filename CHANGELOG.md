@@ -5,6 +5,16 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4] - 2026-06-02
+
+### Changed
+
+- **PostgreSQL 18** (`postgres:18-alpine` in Compose and CI). Existing `stigmer-postgres-data` from PG 16 is not compatible — run `make reset-db` after pull, or dump/restore manually.
+- **Python 3.13** (backend image and CI), **nginx 1.28-alpine**.
+- Python deps bumped (FastAPI 0.128+, uvicorn 0.39+, httpx 0.28+, Alembic 1.16+, psycopg 3.2.13+, pytest 8.4+, ruff 0.15+).
+
+[1.4]: https://github.com/cha0skvlt/stigmer.ai/releases/tag/v1.4
+
 ## [1.3] - 2026-06-01
 
 ### Added

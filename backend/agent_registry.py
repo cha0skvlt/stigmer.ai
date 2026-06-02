@@ -3,8 +3,8 @@
 import os
 import re
 import secrets
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from passlib.context import CryptContext
 from psycopg.rows import dict_row
@@ -113,7 +113,7 @@ def revoke_agent(agent_id: str) -> None:
                 )
 
 
-def resolve_agent_id_from_key(raw_key: str) -> Optional[str]:
+def resolve_agent_id_from_key(raw_key: str) -> str | None:
     if not raw_key:
         return None
     with pool().connection() as conn:
@@ -127,7 +127,7 @@ def resolve_agent_id_from_key(raw_key: str) -> Optional[str]:
 
 
 def touch_agent_last_seen(agent_id: str) -> None:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     with pool().connection() as conn:
         conn.execute("SET TIME ZONE 'UTC';")
         with conn.cursor() as cur:
