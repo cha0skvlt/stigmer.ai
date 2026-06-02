@@ -7,7 +7,34 @@ cd "$ROOT"
 
 LOG_DIR="${STIGMER_LOG_DIR:-$ROOT/logs}"
 LOG_FILE="${STIGMER_LOG_FILE:-$LOG_DIR/stigmer.log}"
-COMPOSE=(docker compose -p stigmer -f docker-compose.yml)
+
+resolve_docker() {
+  local d="${STIGMER_DOCKER_BIN:-}"
+  if [[ -n "$d" && -x "$d" ]]; then
+    printf '%s' "$d"
+    return 0
+  fi
+  d="$(command -v docker 2>/dev/null || true)"
+  if [[ -n "$d" && -x "$d" ]]; then
+    printf '%s' "$d"
+    return 0
+  fi
+  for d in /opt/homebrew/bin/docker /usr/local/bin/docker; do
+    if [[ -x "$d" ]]; then
+      printf '%s' "$d"
+      return 0
+    fi
+  done
+  return 1
+}
+
+DOCKER_BIN="$(resolve_docker || true)"
+if [[ -z "$DOCKER_BIN" ]]; then
+  echo "ERROR: docker not found (PATH=$PATH). If running from launchd, set PATH or STIGMER_DOCKER_BIN." >&2
+  exit 1
+fi
+
+COMPOSE=("$DOCKER_BIN" compose -p stigmer -f docker-compose.yml)
 
 mkdir -p "$LOG_DIR"
 
@@ -68,7 +95,7 @@ warn_port_8080_conflict() {
 
 wait_for_docker() {
   for ((i = 1; i <= 120; i++)); do
-    if docker info >/dev/null 2>&1; then
+    if "$DOCKER_BIN" info >/dev/null 2>&1; then
       log "Docker is running"
       return 0
     fi
