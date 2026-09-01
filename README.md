@@ -137,4 +137,4 @@ Industrial monochrome UI: colour on label pills, flame/urgent signal, and accent
 
 ## License
 
-Copyright © 2026 Eugene Tomashkov — **GPL-3.0**. See [LICENSE](LICENSE).
+Copyright © 2026 Eugene Grossbart — **GPL-3.0**. See [LICENSE](LICENSE).
